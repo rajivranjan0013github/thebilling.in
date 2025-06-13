@@ -20,7 +20,9 @@ const BatchSuggestion = forwardRef(
       onSuggestionSelect,
       inventoryId,
       inputRef,
+      batchTracking,
       disabled,
+      fromWhere,
       onKeyDown,
     },
     ref
@@ -32,6 +34,7 @@ const BatchSuggestion = forwardRef(
     const suggestionContainerRef = useRef(null);
     const { toast } = useToast();
     const [suggestions, setSuggestions] = useState([]);
+    console.log(suggestions)
 
     useEffect(() => {
       const fetchBatches = async () => {
@@ -58,7 +61,7 @@ const BatchSuggestion = forwardRef(
         .filter((suggestion) =>
           suggestion?.batchNumber
             ?.toLowerCase()
-            ?.includes((value || "").toLowerCase())
+            ?.includes((value || "").toLowerCase()) && (suggestion.batchTracking!==false)
         )
         .sort((a, b) => {
           // First sort by quantity (out of stock at bottom)
@@ -76,6 +79,7 @@ const BatchSuggestion = forwardRef(
           return aMonth - bMonth;
         });
     }, [value, suggestions]);
+    console.log(filteredSuggestions)
 
     useEffect(() => {
       setFilteredSuggestions(filtered);
@@ -99,6 +103,8 @@ const BatchSuggestion = forwardRef(
     };
 
     const handleKeyDown = (e) => {
+      
+      console.log(e.key);
       // First handle any custom keydown handler passed as prop
       if (onKeyDown) {
         onKeyDown(e);
@@ -133,6 +139,13 @@ const BatchSuggestion = forwardRef(
         // }
       }
     };
+    useEffect(() => {
+      console.log(batchTracking, filteredSuggestions);
+      if (batchTracking === false && suggestions.length > 0) {
+        onSuggestionSelect(suggestions[0]);
+        setShowSuggestions(false);
+      }
+    }, [batchTracking, suggestions]);
 
     useEffect(() => {
       if (selectedIndex >= 0 && suggestionListRef.current) {
@@ -169,13 +182,12 @@ const BatchSuggestion = forwardRef(
             autoComplete="off"
             onKeyDown={handleKeyDown}
             onFocus={() => setShowSuggestions(true)}
-            placeholder={"batch no"}
             className="h-8 w-full border-[1px] border-gray-300 px-2"
           />
           {/* <ChevronsUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50 " /> */}
         </div>
 
-        {showSuggestions && filteredSuggestions.length > 0 && (
+        {(!disabled && showSuggestions && filteredSuggestions.length > 0 ) && (
           <div
             ref={suggestionContainerRef}
             className="absolute z-10 w-[700px] mt-1 bg-white border border-gray-300 rounded-sm shadow-lg"

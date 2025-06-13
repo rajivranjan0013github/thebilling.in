@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const stockTimelineSchema = new mongoose.Schema(
   {
@@ -31,7 +31,7 @@ const stockTimelineSchema = new mongoose.Schema(
     debit: Number,
     pack: Number,
     balance: Number,
-    batchNumber: String,
+    batchNumber: String,    
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
     createdByName: String,
     name: String, // name of the customer or distributor
@@ -41,7 +41,7 @@ const stockTimelineSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-stockTimelineSchema.plugin(pharmacyPlugin);
+stockTimelineSchema.plugin(shopPlugin);
 
 export const StockTimeline = mongoose.model(
   "StockTimeline",

@@ -2,13 +2,13 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Staff } from "../models/Staff.js";
-import { identifyPharmacyFromBody } from "../middleware/pharmacyMiddleware.js";
+import { identifyShopFromBody } from "../middleware/shopMiddleware.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import { verifySuperAdmin } from "../middleware/SuperAdminMiddleWare.js";
 const router = express.Router();
 
 // Registration route for staff by admin access person , not for genral login
-router.post("/register", identifyPharmacyFromBody, async (req, res) => {
+router.post("/register", identifyShopFromBody, async (req, res) => {
   try {
     const { username, password, name, ...otheFields } = req.body;
 
@@ -48,7 +48,7 @@ router.post("/register", identifyPharmacyFromBody, async (req, res) => {
   }
 });
 
-router.post("/login", identifyPharmacyFromBody, async (req, res) => {
+router.post("/login", identifyShopFromBody, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -56,7 +56,7 @@ router.post("/login", identifyPharmacyFromBody, async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
- 
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -70,7 +70,7 @@ router.post("/login", identifyPharmacyFromBody, async (req, res) => {
         maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
       });
       // Add new cookie for hospitalId
-      res.cookie("pharmacyId", req.body.pharmacyId, {
+      res.cookie("shopId", req.body.shopId, {
         maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
       });
 
@@ -87,7 +87,7 @@ router.post("/logout", (req, res) => {
   try {
     // Clear the cookies
     res.clearCookie("jwtaccesstoken");
-    res.clearCookie("pharmacyId");
+    res.clearCookie("shopId");
 
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {

@@ -7,9 +7,7 @@ const Settings = () => {
 
   return (
     <div className="p-4 gap-4 flex">
-      <Button onClick={() => navigate("/settings/pharmacy-info")}>
-        Pharmacy Info
-      </Button>
+      <Button onClick={() => navigate("/settings/shop-info")}>Shop Info</Button>
       <Button onClick={() => navigate("/settings/config")}>Configure</Button>
       <Button onClick={() => navigate("/settings/manage-groups")}>
         Manage Groups

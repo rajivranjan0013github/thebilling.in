@@ -21,12 +21,28 @@ export default function SaleTable({
   viewMode,
 }) {
   const { toast } = useToast();
+  console.log(products);
   const [editMode, setEditMode] = useState(true);
   const [newProduct, setNewProduct] = useState({
     types: saleType === "return" ? "return" : "sale",
   });
   const [productSearch, setProductSearch] = useState(""); // for product Input-> which is passing in inventory suggestion
   const [batchNumber, setBatchNumber] = useState("");
+
+  const fieldOrder = [
+    "product",
+    "batchNumber",
+    "HSN",
+    "pack",
+    "expiry",
+    "mrp",
+    "packs",
+    "loose",
+    "saleRate",
+    "discount",
+    "gstPer",
+    "add",
+  ];
 
   // --- Effect to update product types when saleType changes --- START
   useEffect(() => {
@@ -94,7 +110,10 @@ export default function SaleTable({
     }
 
     // Calculate amount if we have quantity and pricing info
-    if ((updatedProduct?.packs || updatedProduct?.loose) && updatedProduct?.mrp) {
+    if (
+      (updatedProduct?.packs || updatedProduct?.loose) &&
+      updatedProduct?.mrp
+    ) {
       // const discount = Number(updatedProduct?.discount) || 0;
       // const gstPer = Number(updatedProduct?.gstPer) || 0;
       const packs = Number(updatedProduct?.packs || 0); // for quantity
@@ -116,20 +135,6 @@ export default function SaleTable({
 
   // --- Handle keydown for input fields ---
   const handleInputKeyDown = (e, field) => {
-    const fieldOrder = [
-      "product",
-      "batchNumber",
-      "HSN",
-      "pack",
-      "expiry",
-      "mrp",
-      "packs",
-      "loose",
-      "saleRate",
-      "discount",
-      "gstPer",
-      "add",
-    ];
     if (e.key === "Enter") {
       e.preventDefault();
 
@@ -141,7 +146,7 @@ export default function SaleTable({
           if (inputRef.current[prevField]) {
             inputRef.current[prevField].focus();
           }
-        } 
+        }
         return;
       }
 
@@ -159,7 +164,6 @@ export default function SaleTable({
         const nextField = fieldOrder[i];
 
         // Check if the field is empty
-      
         const isEmpty =
           !newProduct[nextField] || String(newProduct[nextField]).trim() === "";
 
@@ -186,7 +190,11 @@ export default function SaleTable({
       return;
     }
 
-    if (!newProduct.batchNumber && !batchNumber) {
+    if (
+      newProduct.isBatchTracked !== false &&
+      !newProduct.batchNumber &&
+      !batchNumber
+    ) {
       toast({ variant: "destructive", title: "Please select batch" });
       if (inputRef.current["batchNumber"])
         inputRef.current["batchNumber"].focus(); // Focus batch input if not selected
@@ -247,11 +255,17 @@ export default function SaleTable({
     }
     // --- Expiry Date Check END ---
 
-    const { pack, currentStocks, quantity } = newProduct;
+    const { pack, currentStocks, quantity, primaryUnit, secondaryUnit } =
+      newProduct;
 
     if (currentStocks < quantity && newProduct?.types === "sale") {
       toast({
-        title: `${convertQuantity(currentStocks, pack)} are in stocks`,
+        title: `${convertQuantity(
+          currentStocks,
+          pack,
+          primaryUnit,
+          secondaryUnit
+        )} are in stocks`,
         variant: "destructive",
       });
       return;
@@ -294,19 +308,50 @@ export default function SaleTable({
   };
 
   const handleProductSelect = (product) => {
-    setNewProduct((pre) => ({
-      ...pre,
+    console.log(product);
+    const updatedProduct = {
+      ...newProduct,
       productName: product.name,
       mfcName: product.mfcName,
       inventoryId: product._id,
+      mrp: product.mrp || 0,
+      saleRate: product.saleRate || 0,
+      discount: product.discount || 0,
+      primaryUnit: product.primaryUnit,
+      secondaryUnit: product.secondaryUnit,
+      gstPer: product.gstPer || 0,
       HSN: product.HSN || "",
       pack: product.pack || 1,
       location: product.location || "",
-      types: saleType === "return" ? "return" : "sale",
-    }));
+      isBatchTracked: product.isBatchTracked,
+    };
+    setNewProduct(updatedProduct);
     setProductSearch(product.name);
-    if (inputRef?.current["batchNumber"]) {
-      inputRef.current["batchNumber"].focus();
+
+    const isBatchTracked = product.isBatchTracked ?? true;
+    const currentIndex = fieldOrder.indexOf("product");
+
+    for (let i = currentIndex + 1; i < fieldOrder.length; i++) {
+      const nextField = fieldOrder[i];
+      if (
+        !isBatchTracked &&
+        (nextField === "batchNumber" || nextField === "expiry")
+      ) {
+        continue;
+      }
+
+      const isEmpty =
+        !updatedProduct[nextField] ||
+        String(updatedProduct[nextField]).trim() === "";
+
+      if (isEmpty || nextField === "add") {
+        setTimeout(() => {
+          if (inputRef.current[nextField]) {
+            inputRef.current[nextField].focus();
+          }
+        }, 100);
+        return;
+      }
     }
   };
 
@@ -326,7 +371,7 @@ export default function SaleTable({
       const packs = Number(prev?.packs || 0);
       const loose = Number(prev?.loose || 0);
       const pack = batch.pack || prev.pack || 1;
-      
+
       // Calculate new amount if quantities exist
       let amount = "";
       if (packs || loose) {
@@ -350,7 +395,7 @@ export default function SaleTable({
         discount: tempDiscount,
         types: prev.types || (saleType === "return" ? "return" : "sale"),
         amount: amount,
-        quantity: packs || loose ? pack * packs + loose : undefined
+        quantity: packs || loose ? pack * packs + loose : undefined,
       };
     });
   };
@@ -386,7 +431,7 @@ export default function SaleTable({
           <p className="text-xs font-semibold">MRP</p>
         </div>
         <div className=" ">
-          <p className="text-xs font-semibold">PACKS</p>
+          <p className="text-xs font-semibold">QTY</p>
         </div>
         <div className=" ">
           <p className="text-xs font-semibold">LOOSE</p>
@@ -437,11 +482,13 @@ export default function SaleTable({
           <div className="col-span-2">
             <BatchSuggestion
               inputRef={inputRef}
-              value={batchNumber}
+              value={newProduct.isBatchTracked ? batchNumber : ""}
               setValue={setBatchNumber}
               onSuggestionSelect={handleBatchSelect}
               inventoryId={newProduct?.inventoryId}
+              batchTracking={newProduct.isBatchTracked}
               ref={(el) => (inputRef.current["batchNumber"] = el)}
+              disabled={newProduct.isBatchTracked === false}
             />
           </div>
           <div>
@@ -478,17 +525,17 @@ export default function SaleTable({
               placeholder="MM/YY"
               className="h-8 w-full border-[1px] border-gray-300 px-2"
               onKeyDown={(e) => handleInputKeyDown(e, "expiry")}
+              disabled={newProduct.isBatchTracked === false}
             />
           </div>
           <div>
             <div className="relative">
-             
               <Input
                 ref={(el) => (inputRef.current["mrp"] = el)}
                 onChange={(e) => handleInputChange("mrp", e.target.value)}
                 value={newProduct.mrp || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 text-right"
+                className="h-8 w-full border-[1px] border-gray-300 text-right px-1"
                 onKeyDown={(e) => handleInputKeyDown(e, "mrp")}
               />
             </div>
@@ -515,9 +562,6 @@ export default function SaleTable({
           </div>
           <div>
             <div className="relative">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 z-10">
-                ₹
-              </span>
               <Input
                 ref={(el) => (inputRef.current["saleRate"] = el)}
                 onChange={(e) => handleInputChange("saleRate", e.target.value)}
@@ -605,7 +649,7 @@ export default function SaleTable({
                 <Input
                   disabled={editMode}
                   type="text"
-                  value={product?.batchNumber || ""}
+                  value={product?.isBatchTracked ? product?.batchNumber : ""}
                   className="h-8 w-full border-[1px] border-gray-300 px-1 uppercase"
                 />
               </div>
@@ -642,12 +686,11 @@ export default function SaleTable({
               </div>
               <div>
                 <div className="relative">
-                 
                   <Input
                     disabled={editMode}
                     value={product?.mrp?.toFixed(2) || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 text-right rounded-sm"
+                    className="h-8 w-full border-[1px] border-gray-300 text-right rounded-sm px-1"
                   />
                 </div>
               </div>
@@ -669,12 +712,11 @@ export default function SaleTable({
               </div>
               <div>
                 <div className="relative">
-                 
                   <Input
                     disabled={editMode}
-                    value={Number(product?.saleRate||0)?.toFixed(2) || ""}
+                    value={Number(product?.saleRate || 0)?.toFixed(2) || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 text-right rounded-sm"
+                    className="h-8 w-full border-[1px] border-gray-300 text-right rounded-sm px-1"
                   />
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import staffReducer from "./slices/staffSlice";
 import userReducer from "./slices/userSlice";
-import pharmacyReducer from "./slices/pharmacySlice";
+import shopReducer from "./slices/shopSlice";
 import loaderReducer from "./slices/loaderSlice";
 import expenseReducer from "./slices/expenseSlice";
 import distributorSlice from "./slices/distributorSlice";
@@ -19,7 +19,7 @@ import dashboardReducer from "./slices/dashboardSlice";
 export const store = configureStore({
   reducer: {
     staff: staffReducer,
-    pharmacy: pharmacyReducer,
+    shop: shopReducer,
     user: userReducer,
     loader: loaderReducer,
     expenses: expenseReducer,

@@ -33,7 +33,6 @@ const roundToTwo = (num) => {
 
 const inputKeys = [
   "customerName",
-  "doctorName",
   "product",
   "batchNumber",
   "hsn",
@@ -56,7 +55,6 @@ export default function EditSaleInvoice() {
   const {settings, status } = useSelector(state => state.settings)
   const { isCollapsed } = useSelector((state) => state.loader);
   const { invoiceId } = useParams();
-  const doctors = useSelector((state) => state.staff?.doctors);
   const [viewMode, setViewMode] = useState(true);
   const [invoiceDate, setInvoiceDate] = useState();
   const [dueDate, setDueDate] = useState();
@@ -72,11 +70,7 @@ export default function EditSaleInvoice() {
   const { editBillStatus, deleteStatus } = useSelector((state) => state.bill);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Convert doctors array to the format expected by SearchSuggestion
-  const doctorSuggestions = doctors.map((doctor, index) => ({
-    _id: index + 1,
-    name: doctor.name?.includes("Dr") ? doctor.name : `Dr. ${doctor.name}`,
-  }));
+  
 
   const [formData, setFormData] = useState({
     saleType: "invoice",
@@ -109,7 +103,7 @@ export default function EditSaleInvoice() {
         }
         const data = await response.json();
         setCompleteData(data);
-        const {customerName,customerId,invoiceNumber,products,invoiceDate,paymentDueDate,withGst,amountPaid,payments,saleType,is_cash_customer,doctorName} = data;
+        const {customerName,customerId,invoiceNumber,products,invoiceDate,paymentDueDate,withGst,amountPaid,payments,saleType,is_cash_customer} = data;
         const fomateProduct = products.map((item) => {
           const temp = convertQuantityValue(item.quantity, item.pack);
           return { ...item, ...temp };
@@ -127,7 +121,7 @@ export default function EditSaleInvoice() {
           invoiceNumber,
           saleType,
           withGst: withGst ? "yes" : "no",
-          doctorName,
+         
         });
         setCustomerName(customerName);
         setIsCashCounter(is_cash_customer);
@@ -187,12 +181,13 @@ export default function EditSaleInvoice() {
       if (products.length === 0) {
         throw new Error("Please add at least one product");
       }
-
+      console.log(products);
       const formattedProducts = products.map((product) => ({
         types: product.types,
         inventoryId: product.inventoryId,
         productName: product.productName,
         batchNumber: product.batchNumber,
+        isBatchTracked: product.isBatchTracked,
         batchId: product.batchId,
         HSN: product.HSN,
         expiry: product.expiry,
@@ -205,8 +200,9 @@ export default function EditSaleInvoice() {
         gstPer: Number(product.gstPer),
         amount: Number(product.amount),
       }));
+      console.log(formattedProducts);
 
-      // Create updated payments array with edited amounts
+      //Create updated payments array with edited amounts
       const updatedPayments = payments.map(payment => ({
         _id : payment._id,
         amount: editedPayments[payment._id] || payment.amount
@@ -221,7 +217,7 @@ export default function EditSaleInvoice() {
         is_cash_customer: isCashCounter,
         invoiceDate: invoiceDate,
         paymentDueDate: amountData?.grandTotal > amountPaid  ? dueDate : null,
-        doctorName: formData.doctorName,
+       
         products: formattedProducts,
         withGst: formData.withGst === "yes",
         grandTotal: amountData.grandTotal,
@@ -275,6 +271,7 @@ export default function EditSaleInvoice() {
           );
         }
       });
+      console.log(finalData);
 
       const result = await dispatch(editSaleInvoice(finalData)).unwrap();
 
@@ -510,25 +507,7 @@ export default function EditSaleInvoice() {
               Cash/Counter Sale
             </div>
           </div>
-          <div>
-            <Label className="text-sm font-medium">DOCTOR NAME</Label>
-            <SearchSuggestion
-              suggestions={doctorSuggestions}
-              placeholder="Enter or select doctor name"
-              value={formData.doctorName}
-              setValue={(value) => handleInputChange("doctorName", value)}
-              onSuggestionSelect={(selected) => {
-                handleInputChange("doctorName", selected.name);
-                // Focus on the product input after selecting a doctor
-                if (inputRef.current["product"]) {
-                  inputRef.current["product"].focus();
-                }
-              }}
-              onKeyDown={(e) => handleKeyDown(e, "doctorName")}
-              ref={(el) => (inputRef.current["doctorName"] = el)}
-              disabled={viewMode}
-            />
-          </div>
+        
           <div>
             <Label className="text-sm font-medium">
               INVOICE NO<span className="text-rose-500">*REQUIRED</span>

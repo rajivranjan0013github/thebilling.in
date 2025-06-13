@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "../../ui/table";
 
-export default function Timeline({ inventoryId }) {
+export default function Timeline({ inventoryId, isBatchTracked, inventoryName }) {
   const { toast } = useToast();
   const timelineRef = useRef(null);
   const [timeline, setTimeline] = useState([]);
@@ -105,7 +105,7 @@ export default function Timeline({ inventoryId }) {
                     <TableHead>TXN TYPE</TableHead>
                     <TableHead>TXN NO</TableHead>
                     <TableHead>DISTRIBUTOR/CUSTOMER</TableHead>
-                    <TableHead>BATCH NO</TableHead>
+                    {isBatchTracked && <TableHead>BATCH NO</TableHead>}
                     <TableHead className="text-right">CREDIT</TableHead>
                     <TableHead className="text-right">DEBIT</TableHead>
                     <TableHead className="text-right">BALANCE</TableHead>
@@ -156,7 +156,8 @@ export default function Timeline({ inventoryId }) {
                               "bg-indigo-600 hover:bg-indigo-700"
                             }
                             ${
-                              (transaction.type === "PURCHASE_DELETE" || transaction.type === "SALE_DELETE") &&
+                              (transaction.type === "PURCHASE_DELETE" ||
+                                transaction.type === "SALE_DELETE") &&
                               "bg-rose-600 hover:bg-rose-700"
                             }
                           `}
@@ -174,17 +175,26 @@ export default function Timeline({ inventoryId }) {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {transaction.name || transaction?.distributorName || transaction?.customerName || "-"}
+                          {transaction.name ||
+                            transaction?.distributorName ||
+                            transaction?.customerName ||
+                            "-"}
                         </div>
                         <div className="text-xs text-gray-500">
-                          Mob: {transaction?.mob || transaction?.distributorMob || transaction?.customerMob || "-"}
+                          Mob:{" "}
+                          {transaction?.mob ||
+                            transaction?.distributorMob ||
+                            transaction?.customerMob ||
+                            "-"}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">
-                          {transaction?.batchNumber || "-"}
-                        </div>
-                      </TableCell>
+                      {isBatchTracked && (
+                        <TableCell>
+                          <div className="text-sm font-medium">
+                            {transaction?.batchNumber===inventoryName?"---" : transaction?.batchNumber || "---"}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell className="text-right">
                         <span className="text-green-600 font-medium">
                           {transaction?.credit || "-"}
@@ -214,8 +224,9 @@ export default function Timeline({ inventoryId }) {
                                 Transaction Remarks
                               </h4>
                               <div className="text-sm text-gray-500">
-                                {(transaction?.remarks ||
-                                  "No remarks available")
+                                {(
+                                  transaction?.remarks || "No remarks available"
+                                )
                                   .split("\n")
                                   .map((line, index) => (
                                     <p key={index}>{line || "\u00A0"}</p>

@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "../../ui/table";
 
-export default function SalesTab({ inventoryId }) {
+export default function SalesTab({ inventoryId, isBatchTracked }) {
   const { toast } = useToast();
   const [sales, setSales] = useState([]);
   const navigate = useNavigate();
@@ -71,8 +71,9 @@ export default function SalesTab({ inventoryId }) {
   };
 
   const calculateMargin = (sale) => {
+    console.log("sale", sale);
     if (!sale.purchaseRate || !sale.saleRate) return 0;
-    const netSaleRate = sale.saleRate * (1 + sale.gstPer / 100);
+    const netSaleRate = sale.saleRate 
     const margin = (
       ((netSaleRate - sale.purchaseRate) / sale.purchaseRate) *
       100
@@ -117,7 +118,7 @@ export default function SalesTab({ inventoryId }) {
                   <TableRow>
                     <TableHead>INVOICE DATE</TableHead>
                     <TableHead>SOLD TO</TableHead>
-                    <TableHead>BATCH NO</TableHead>
+                    {isBatchTracked && <TableHead>BATCH NO</TableHead>}
                     <TableHead className="text-right">MRP</TableHead>
                     <TableHead className="text-right">SALE RATE</TableHead>
                     <TableHead className="text-right">MARGIN</TableHead>
@@ -149,14 +150,16 @@ export default function SalesTab({ inventoryId }) {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">
-                          {sale.batchNumber}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Expiry: {sale.expiry}
-                        </div>
-                      </TableCell>
+                      {(isBatchTracked ) && (
+                        <TableCell>
+                          <div className="text-sm font-medium">
+                            {sale.isBatchTracked ? sale.batchNumber : "---"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Expiry: {sale.expiry}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell className="text-right">
                         ₹{sale.mrp?.toFixed(2)}
                       </TableCell>
@@ -164,7 +167,7 @@ export default function SalesTab({ inventoryId }) {
                         <div className="text-sm font-medium">
                           ₹
                           {convertToFraction(
-                            sale.saleRate * (1 + sale.gstPer / 100)
+                            sale.saleRate 
                           )}
                         </div>
                         <div className="text-xs text-gray-500">

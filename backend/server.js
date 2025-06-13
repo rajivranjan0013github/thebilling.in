@@ -9,8 +9,8 @@ import reportRoutes from "./routes/reportRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import salesRoutes from "./routes/salesRoutes.js";
-import { identifyPharmacy } from "./middleware/pharmacyMiddleware.js";
-import pharmacyRoutes from "./routes/pharmacyRoutes.js";
+import { identifyShop } from "./middleware/shopMiddleware.js";
+import shopRoutes from "./routes/shopRoutes.js";
 import superAdminRoutes from "./routes/superAdmin.js";
 import accountRoutes from "./routes/accountRoutes.js";
 import distributorRoutes from "./routes/distributorRouter.js";
@@ -58,10 +58,10 @@ mongoose
 // Apply tenant plugin to all schemas
 
 // API routes
-app.use("/api/pharmacies", pharmacyRoutes);
+app.use("/api/shops", shopRoutes);
 app.use("/api/superadmin", superAdminRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api", identifyPharmacy);
+app.use("/api", identifyShop);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/distributor", distributorRoutes);

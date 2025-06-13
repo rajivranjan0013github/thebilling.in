@@ -111,7 +111,7 @@ router.get("/sales", async (req, res) => {
       { $sort: { invoiceDate: -1 } },
     ];
 
-    const sales = await SalesBill.pharmacyAwareAggregate(pipeline);
+    const sales = await SalesBill.shopAwareAggregate(pipeline);
 
     // Prepare response based on report type
     let response = {
@@ -460,7 +460,7 @@ router.get("/purchase", async (req, res) => {
       { $sort: { invoiceDate: -1 } },
     ];
 
-    const purchases = await InvoiceSchema.pharmacyAwareAggregate(pipeline);
+    const purchases = await InvoiceSchema.shopAwareAggregate(pipeline);
 
     // Prepare response based on report type
     let response = {
@@ -701,7 +701,7 @@ router.get("/inventory", async (req, res) => {
           { $sort: { productName: 1, batchNumber: 1 } },
         ];
 
-        const stockStatus = await InventoryBatch.pharmacyAwareAggregate(
+        const stockStatus = await InventoryBatch.shopAwareAggregate(
           stockStatusPipeline
         );
         response.items = stockStatus;
@@ -736,7 +736,7 @@ router.get("/inventory", async (req, res) => {
           { $sort: { currentStock: 1 } },
         ];
 
-        const lowStockItems = await InventoryBatch.pharmacyAwareAggregate(
+        const lowStockItems = await InventoryBatch.shopAwareAggregate(
           lowStockPipeline
         );
         response.lowStockItems = lowStockItems;
@@ -806,7 +806,7 @@ router.get("/inventory", async (req, res) => {
           },
         ];
 
-        const expiryAlerts = await InventoryBatch.pharmacyAwareAggregate(
+        const expiryAlerts = await InventoryBatch.shopAwareAggregate(
           expiryPipeline
         );
         const processedExpiryAlerts = expiryAlerts.map((item) => ({

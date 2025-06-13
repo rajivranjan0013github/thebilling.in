@@ -22,8 +22,8 @@ const initialState = {
   dashboardData: [],
   dashboardDataStatus: "idle",
   dashboardRange: "idle",
-  pharmacyInfo: null,
-  pharmacyInfoStatus: "idle",
+  shopInfo: null,
+  shopInfoStatus: "idle",
   updateStatus: "idle",
 };
 
@@ -114,9 +114,9 @@ export const fetchItems = createLoadingAsyncThunk(
 
 // New thunk for fetching sales bills
 export const fetchSalesBills = createLoadingAsyncThunk(
-  "pharmacy/fetchSalesBills",
+  "shop/fetchSalesBills",
   async () => {
-    const response = await fetch(`${Backend_URL}/api/pharmacy/sales-bills`, {
+    const response = await fetch(`${Backend_URL}/api/shop/sales-bills`, {
       credentials: "include",
     });
     if (!response.ok) {
@@ -129,19 +129,16 @@ export const fetchSalesBills = createLoadingAsyncThunk(
 
 // New thunk for creating a sales bill
 export const createSalesBill = createLoadingAsyncThunk(
-  "pharmacy/createSalesBill",
+  "shop/createSalesBill",
   async (salesBillData) => {
-    const response = await fetch(
-      `${Backend_URL}/api/pharmacy/create-sales-bill`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(salesBillData),
-        credentials: "include",
-      }
-    );
+    const response = await fetch(`${Backend_URL}/api/shop/create-sales-bill`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(salesBillData),
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error("Failed to create sales bill");
     }
@@ -152,10 +149,10 @@ export const createSalesBill = createLoadingAsyncThunk(
 
 // New thunk for updating inventory items
 export const updateInventoryItem = createLoadingAsyncThunk(
-  "pharmacy/updateInventoryItem",
+  "shop/updateInventoryItem",
   async ({ inventoryId, updateData }) => {
     const response = await fetch(
-      `${Backend_URL}/api/pharmacy/inventory/${inventoryId}`,
+      `${Backend_URL}/api/shop/inventory/${inventoryId}`,
       {
         method: "POST",
         headers: {
@@ -175,7 +172,7 @@ export const updateInventoryItem = createLoadingAsyncThunk(
 
 // New thunk for creating an inventory item
 export const createInventoryItem = createLoadingAsyncThunk(
-  "pharmacy/createInventoryItem",
+  "shop/createInventoryItem",
   async (itemData) => {
     const response = await fetch(`${Backend_URL}/api/inventory/create`, {
       method: "POST",
@@ -195,10 +192,10 @@ export const createInventoryItem = createLoadingAsyncThunk(
 
 // New thunk for deleting an inventory item
 export const deleteInventoryItem = createLoadingAsyncThunk(
-  "pharmacy/deleteInventoryItem",
+  "shop/deleteInventoryItem",
   async (inventoryId) => {
     const response = await fetch(
-      `${Backend_URL}/api/pharmacy/inventory/${inventoryId}`,
+      `${Backend_URL}/api/shop/inventory/${inventoryId}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -212,71 +209,82 @@ export const deleteInventoryItem = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
-// New thunk for fetching pharmacy dashboard data
-export const fetchPharmacyDashboardData = createLoadingAsyncThunk(
-  "pharmacy/fetchDashboardData",
+// New thunk for fetching shop dashboard data
+export const fetchShopDashboardData = createLoadingAsyncThunk(
+  "shop/fetchDashboardData",
   async ({ startDate, endDate, range }) => {
     const params = new URLSearchParams({ startDate, endDate });
     const response = await fetch(
-      `${Backend_URL}/api/pharmacy/dashboard-data?${params}`,
+      `${Backend_URL}/api/shop/dashboard-data?${params}`,
       {
         credentials: "include",
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch pharmacy dashboard data");
+      throw new Error("Failed to fetch shop dashboard data");
     }
     return response.json();
   },
   { useGlobalLoader: true }
 );
 
-// Create an async thunk for fetching pharmacy data
-export const fetchPharmacyInfo = createLoadingAsyncThunk(
-  "pharmacy/fetchPharmacyInfo",
+// Create an async thunk for fetching shop data
+export const fetchShopInfo = createLoadingAsyncThunk(
+  "shop/fetchShopInfo",
   async () => {
-    const response = await fetch(`${Backend_URL}/api/pharmacies/getPharmacy`, {
+    const response = await fetch(`${Backend_URL}/api/shops/getShop`, {
       credentials: "include",
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch pharmacy data");
+      throw new Error("Failed to fetch shop data");
     }
-    const pharmacy = await response.json();
-    if (pharmacy.logo) {
-      const img = await fetch(pharmacy.logo);
-      const blob = await img.blob();
-      const url = URL.createObjectURL(blob);
-      pharmacy.logoUsable = url;
+    const shop = await response.json();
+    if (shop.logo) {
+      try {
+        console.log(shop.logo);
+        const img = await fetch(shop.logo);
+        console.log(img);
+        if (img.ok) {
+          const blob = await img.blob();
+          const url = URL.createObjectURL(blob);
+          shop.logoUsable = url;
+        } else {
+          console.error("Failed to fetch shop logo:", img.statusText);
+        }
+        return shop;
+      } catch (error) {
+        return shop;
+      }
     }
-    return pharmacy;
+    return shop;
   },
-  { useGlobalLoading: true }
+  { useGlobalLoader: false }
 );
 
-// New async thunk for updating pharmacy info
-export const updatePharmacyInfo = createLoadingAsyncThunk(
-  "pharmacy/updatePharmacyInfo",
-  async (pharmacyData) => {
+// New async thunk for updating shop info
+export const updateShopInfo = createLoadingAsyncThunk(
+  "shop/updateShopInfo",
+  async (shopData) => {
     const response = await fetch(
-      `${Backend_URL}/api/pharmacies/${pharmacyData.pharmacyId}`,
+      `${Backend_URL}/api/shops/${shopData.shopId}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(pharmacyData),
+        body: JSON.stringify(shopData),
+        credentials: "include",
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to update pharmacy data");
+      throw new Error("Failed to update shop data");
     }
     return response.json();
-  },
-  { useGlobalLoading: true }
+  }
 );
 
-const pharmacySlice = createSlice({
-  name: "pharmacy",
+const shopSlice = createSlice({
+  name: "shop",
   initialState,
   reducers: {
     clearSelectedSupplier: (state) => {
@@ -402,36 +410,37 @@ const pharmacySlice = createSlice({
         state.deleteInventoryItemStatus = "failed";
         state.error = action.error.message;
       })
-      .addCase(fetchPharmacyDashboardData.pending, (state) => {
+      .addCase(fetchShopDashboardData.pending, (state) => {
         state.dashboardDataStatus = "loading";
       })
-      .addCase(fetchPharmacyDashboardData.fulfilled, (state, action) => {
+      .addCase(fetchShopDashboardData.fulfilled, (state, action) => {
         state.dashboardDataStatus = "succeeded";
         state.dashboardData = action.payload;
       })
-      .addCase(fetchPharmacyDashboardData.rejected, (state, action) => {
+      .addCase(fetchShopDashboardData.rejected, (state, action) => {
         state.dashboardDataStatus = "failed";
         state.error = action.error.message;
       })
-      .addCase(fetchPharmacyInfo.pending, (state) => {
-        state.pharmacyInfoStatus = "loading";
+      .addCase(fetchShopInfo.pending, (state) => {
+        state.shopInfoStatus = "loading";
       })
-      .addCase(fetchPharmacyInfo.fulfilled, (state, action) => {
-        state.pharmacyInfoStatus = "succeeded";
-        state.pharmacyInfo = action.payload;
+      .addCase(fetchShopInfo.fulfilled, (state, action) => {
+        state.shopInfoStatus = "succeeded";
+        state.shopInfo = action.payload;
       })
-      .addCase(fetchPharmacyInfo.rejected, (state, action) => {
-        state.pharmacyInfoStatus = "failed";
+      .addCase(fetchShopInfo.rejected, (state, action) => {
+        console.log("failed");
+        state.shopInfoStatus = "failed";
         state.error = action.error.message;
       })
-      .addCase(updatePharmacyInfo.pending, (state) => {
+      .addCase(updateShopInfo.pending, (state) => {
         state.updateStatus = "loading";
       })
-      .addCase(updatePharmacyInfo.fulfilled, (state, action) => {
+      .addCase(updateShopInfo.fulfilled, (state, action) => {
         state.updateStatus = "succeeded";
-        state.pharmacyInfo = action.payload.pharmacy;
+        state.shopInfo = action.payload.shop;
       })
-      .addCase(updatePharmacyInfo.rejected, (state, action) => {
+      .addCase(updateShopInfo.rejected, (state, action) => {
         state.updateStatus = "failed";
         state.error = action.error.message;
       });
@@ -439,5 +448,5 @@ const pharmacySlice = createSlice({
 });
 
 // Update the exported actions
-export const { clearSelectedSupplier } = pharmacySlice.actions;
-export default pharmacySlice.reducer;
+export const { clearSelectedSupplier } = shopSlice.actions;
+export default shopSlice.reducer;

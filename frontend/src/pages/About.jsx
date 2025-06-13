@@ -152,7 +152,7 @@ export default function AboutPage() {
                   About PharmaBill Pro
                 </h1>
                 <p className="max-w-[900px] text-sm sm:text-base md:text-lg lg:text-xl text-gray-500">
-                  Streamlining pharmacy operations with intelligent billing and
+                  Streamlining shop operations with intelligent billing and
                   inventory management solutions.
                 </p>
               </div>
@@ -162,7 +162,7 @@ export default function AboutPage() {
         <section className="w-full py-8 sm:py-12 md:py-16 lg:py-20 bg-gray-100">
           <div className="container px-4 md:px-6 mx-auto">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-center mb-8 sm:mb-12">
-              Complete Pharmacy Management Solution
+              Complete Shop Management Solution
             </h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
               <div className="flex flex-col items-center text-center space-y-4">
@@ -208,8 +208,8 @@ export default function AboutPage() {
                 <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600" />
                 <h3 className="text-lg sm:text-xl font-bold">Time Savings</h3>
                 <p className="text-sm sm:text-base text-gray-600">
-                  Pharmacies save up to 75% of time spent on billing and
-                  prescription processing.
+                  Shops save up to 75% of time spent on billing and prescription
+                  processing.
                 </p>
               </div>
               <div className="flex flex-col items-center text-center space-y-4">
@@ -294,8 +294,7 @@ export default function AboutPage() {
                   Scalable Solution
                 </h3>
                 <p className="text-sm sm:text-base text-gray-500">
-                  Perfect for independent pharmacies and large pharmacy chains
-                  alike.
+                  Perfect for independent shops and large retail chains alike.
                 </p>
               </div>
               <div className="space-y-4">
@@ -303,15 +302,13 @@ export default function AboutPage() {
                   Customizable Workflows
                 </h3>
                 <p className="text-sm sm:text-base text-gray-500">
-                  Adapt the system to your pharmacy's specific needs and
-                  processes.
+                  Adapt the system to your shop's specific needs and workflows.
                 </p>
               </div>
               <div className="space-y-4">
                 <h3 className="text-lg sm:text-xl font-bold">Expert Support</h3>
                 <p className="text-sm sm:text-base text-gray-500">
-                  Get dedicated support from pharmacy technology specialists
-                  24/7.
+                  Get dedicated support from retail technology specialists 24/7.
                 </p>
               </div>
             </div>
@@ -327,7 +324,7 @@ export default function AboutPage() {
                 <p className="max-w-[900px] text-sm sm:text-base md:text-lg lg:text-xl text-gray-500">
                   Behind PharmaBill Pro is a dedicated team of pharmacists,
                   healthcare technologists, and industry experts committed to
-                  revolutionizing pharmacy management.
+                  revolutionizing shop management.
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">

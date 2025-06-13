@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "../../ui/table";
 
-export default function PurchaseTab({ inventoryId }) {
+export default function PurchaseTab({ inventoryId, isBatchTracked }) {
   const { toast } = useToast();
   const [purchases, setPurchases] = useState([]);
   const navigate = useNavigate();
@@ -106,7 +106,7 @@ export default function PurchaseTab({ inventoryId }) {
                   <TableRow className="hover:bg-gray-50">
                     <TableHead>INVOICE DATE</TableHead>
                     <TableHead>PURCHASED FROM</TableHead>
-                    <TableHead>BATCH NO</TableHead>
+                    {isBatchTracked && <TableHead>BATCH NO</TableHead>}
                     <TableHead className="text-right">MRP</TableHead>
                     <TableHead className="text-right">NET PURC RATE</TableHead>
                     <TableHead className="text-right">MARGIN</TableHead>
@@ -138,14 +138,16 @@ export default function PurchaseTab({ inventoryId }) {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">
-                          {purchase.batchNumber}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Expiry: {purchase.expiry}
-                        </div>
-                      </TableCell>
+                      {isBatchTracked && (
+                        <TableCell>
+                          <div className="text-sm font-medium">
+                            {purchase.isBatchTracked ? purchase.batchNumber : "---"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Expiry: {purchase.expiry}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell className="text-right">
                         ₹{purchase.mrp?.toFixed(2)}
                       </TableCell>

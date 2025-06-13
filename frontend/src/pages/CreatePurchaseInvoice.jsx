@@ -319,26 +319,32 @@ export default function PurchaseForm() {
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      const formattedProducts = products.map((product) => ({
-        mfcName: product.mfcName,
-        inventoryId: product.inventoryId,
-        name: product.productName,
-        productName: product.productName,
-        batchNumber: product.batchNumber,
-        batchId: product.batchId,
-        expiry: product.expiry,
-        HSN: product.HSN,
-        mrp: roundToTwo(Number(product.mrp)),
-        quantity: Number(product.quantity) * Number(product.pack || 1),
-        free: Number(product.free || 0) * Number(product.pack || 1),
-        pack: Number(product.pack),
-        purchaseRate: roundToTwo(Number(product.purchaseRate)),
-        schemeInput1: Number(product.schemeInput1 || 0),
-        schemeInput2: Number(product.schemeInput2 || 0),
-        discount: roundToTwo(Number(product.discount || 0)),
-        gstPer: roundToTwo(Number(product.gstPer)),
-        amount: roundToTwo(Number(product.amount)),
-      }));
+      
+      const formattedProducts = products.map((product) => {
+       
+
+        return {
+          mfcName: product.mfcName,
+          inventoryId: product.inventoryId,
+          name: product.productName,
+          productName: product.productName,
+          batchNumber:  product.batchNumber ,
+          isBatchTracked: product.isBatchTracked,
+          batchId: product.batchId,
+          expiry:  product.expiry,
+          HSN: product.HSN,
+          mrp: roundToTwo(Number(product.mrp)),
+          quantity: Number(product.quantity) * Number(product.pack || 1),
+          free: Number(product.free || 0) * Number(product.pack || 1),
+          pack: Number(product.pack),
+          purchaseRate: roundToTwo(Number(product.purchaseRate)),
+          schemeInput1: Number(product.schemeInput1 || 0),
+          schemeInput2: Number(product.schemeInput2 || 0),
+          discount: roundToTwo(Number(product.discount || 0)),
+          gstPer: roundToTwo(Number(product.gstPer)),
+          amount: roundToTwo(Number(product.amount)),
+        };
+      });
 
       const purchaseData = {
         invoiceType: "PURCHASE",
@@ -384,7 +390,7 @@ export default function PurchaseForm() {
               }
             : null,
       };
-
+      console.log(purchaseData)
       await dispatch(createPurchaseBill(purchaseData)).unwrap();
 
       toast({

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const PaymentCounterSchema = new mongoose.Schema({
   year: {
@@ -10,7 +10,7 @@ const PaymentCounterSchema = new mongoose.Schema({
     default: 0,
   },
 });
-PaymentCounterSchema.plugin(pharmacyPlugin);
+PaymentCounterSchema.plugin(shopPlugin);
 
 const PaymentCounter = mongoose.model("PaymentCounter", PaymentCounterSchema);
 
@@ -92,7 +92,7 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-paymentSchema.plugin(pharmacyPlugin);
+paymentSchema.plugin(shopPlugin);
 
 paymentSchema.statics.getNextPaymentNumber = async function (session) {
   const currentYear = new Date().getFullYear();

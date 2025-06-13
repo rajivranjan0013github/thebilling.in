@@ -56,6 +56,7 @@ const CustomerSuggestion = forwardRef(({ placeholder, value, setValue, onSuggest
       e.preventDefault();
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === 'Enter') {
+      console.log(selectedIndex);
       if (selectedIndex >= 0) {
         e.preventDefault();
         setValue(filteredSuggestions[selectedIndex].name);
@@ -64,6 +65,7 @@ const CustomerSuggestion = forwardRef(({ placeholder, value, setValue, onSuggest
           onSuggestionSelect(filteredSuggestions[selectedIndex]);
         }
       } else {
+        console.log(onKeyDown);
         if (onKeyDown) {
           onKeyDown(e);
         }

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const InventoryBatchSchema = new mongoose.Schema(
   {
@@ -13,7 +13,11 @@ const InventoryBatchSchema = new mongoose.Schema(
     quantity: { type: Number, default: 0 },
     expiry: String, // mm/yy
     mrp: Number,
+    primaryUnit: String,
+    secondaryUnit: String,
     gstPer: Number,
+    
+    batchTracking: { type: Boolean},
     purchaseRate: Number, // excl gst
     discount: { type: Number, default: 0 },
     saleRate: Number, // without gst
@@ -22,7 +26,7 @@ const InventoryBatchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-InventoryBatchSchema.plugin(pharmacyPlugin);
+InventoryBatchSchema.plugin(shopPlugin);
 
 export const InventoryBatch = mongoose.model(
   "InventoryBatch",

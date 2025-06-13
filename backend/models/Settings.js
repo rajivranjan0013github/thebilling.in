@@ -1,8 +1,12 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
-const SettingsSchema = new mongoose.Schema({
-  adjustment: { type: Boolean, default: false },
-});
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
-SettingsSchema.plugin(pharmacyPlugin);
+const SettingsSchema = new mongoose.Schema(
+  {
+    adjustment: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+SettingsSchema.plugin(shopPlugin);
 export const Settings = mongoose.model("Settings", SettingsSchema);

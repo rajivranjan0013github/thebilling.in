@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Search,
   Users,
@@ -9,7 +15,7 @@ import {
   Filter,
   EllipsisVertical,
   FileInput,
-  Download
+  Download,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -95,10 +101,12 @@ export default function SalesTransactions() {
 
     const handleSearch = async () => {
       try {
-        await dispatch(searchBills({
-          query: debouncedSearchQuery,
-          searchType
-        })).unwrap();
+        await dispatch(
+          searchBills({
+            query: debouncedSearchQuery,
+            searchType,
+          })
+        ).unwrap();
       } catch (err) {
         toast({
           title: "Error",
@@ -112,21 +120,26 @@ export default function SalesTransactions() {
     isInitialDebounceEffectRun.current = false;
   }, [debouncedSearchQuery, searchType, dispatch]);
 
-  const fetchBillsData = useCallback(async (params) => {
-    try {
-      await dispatch(fetchBills({
-        startDate: format(params.startDate, "yyyy-MM-dd"),
-        endDate: format(params.endDate, "yyyy-MM-dd"),
-        filter: saleTypeFilter !== "all" ? saleTypeFilter : undefined
-      })).unwrap();
-    } catch (err) {
-      toast({
-        title: "Error fetching bills",
-        description: err.message,
-        variant: "destructive",
-      });
-    }
-  }, [dispatch, saleTypeFilter]);
+  const fetchBillsData = useCallback(
+    async (params) => {
+      try {
+        await dispatch(
+          fetchBills({
+            startDate: format(params.startDate, "yyyy-MM-dd"),
+            endDate: format(params.endDate, "yyyy-MM-dd"),
+            filter: saleTypeFilter !== "all" ? saleTypeFilter : undefined,
+          })
+        ).unwrap();
+      } catch (err) {
+        toast({
+          title: "Error fetching bills",
+          description: err.message,
+          variant: "destructive",
+        });
+      }
+    },
+    [dispatch, saleTypeFilter]
+  );
 
   // Initialize with URL parameters or defaults
   useEffect(() => {
@@ -138,8 +151,8 @@ export default function SalesTransactions() {
     if (!fromParam || !toParam) {
       const today = new Date();
       const todayFormatted = format(today, "yyyy-MM-dd");
-      
-      setSearchParams(prev => {
+
+      setSearchParams((prev) => {
         prev.set("from", todayFormatted);
         prev.set("to", todayFormatted);
         prev.set("dateFilter", "today");
@@ -148,10 +161,10 @@ export default function SalesTransactions() {
 
       setDateRange({ from: today, to: today });
       setDateFilterType("today");
-      
+
       fetchBillsData({
         startDate: today,
-        endDate: today
+        endDate: today,
       });
       return;
     }
@@ -165,20 +178,20 @@ export default function SalesTransactions() {
       }
 
       setDateRange({ from: fromDate, to: toDate });
-      
+
       if (dateFilterParam) {
         setDateFilterType(dateFilterParam);
       }
 
       fetchBillsData({
         startDate: fromDate,
-        endDate: toDate
+        endDate: toDate,
       });
     } catch (err) {
       const today = new Date();
       const todayFormatted = format(today, "yyyy-MM-dd");
-      
-      setSearchParams(prev => {
+
+      setSearchParams((prev) => {
         prev.set("from", todayFormatted);
         prev.set("to", todayFormatted);
         prev.set("dateFilter", "today");
@@ -187,10 +200,10 @@ export default function SalesTransactions() {
 
       setDateRange({ from: today, to: today });
       setDateFilterType("today");
-      
+
       fetchBillsData({
         startDate: today,
-        endDate: today
+        endDate: today,
       });
 
       toast({
@@ -201,97 +214,103 @@ export default function SalesTransactions() {
     }
   }, []);
 
-  const handleDateSelect = useCallback((range) => {
-    if (range?.from && range?.to) {
-      try {
-        const fromDate = new Date(range.from);
-        const toDate = new Date(range.to);
+  const handleDateSelect = useCallback(
+    (range) => {
+      if (range?.from && range?.to) {
+        try {
+          const fromDate = new Date(range.from);
+          const toDate = new Date(range.to);
 
-        if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-          throw new Error("Invalid date selection");
+          if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+            throw new Error("Invalid date selection");
+          }
+
+          const newFromDate = format(fromDate, "yyyy-MM-dd");
+          const newToDate = format(toDate, "yyyy-MM-dd");
+
+          setDateRange({ from: fromDate, to: toDate });
+          setDateFilterType("custom");
+
+          setSearchParams((prev) => {
+            prev.set("from", newFromDate);
+            prev.set("to", newToDate);
+            prev.set("dateFilter", "custom");
+            return prev;
+          });
+        } catch (err) {
+          toast({
+            title: "Error",
+            description: "Invalid date selection",
+            variant: "destructive",
+          });
+        }
+      }
+    },
+    [setSearchParams, toast]
+  );
+
+  const handleDateFilterChange = useCallback(
+    (value) => {
+      setDateFilterType(value);
+
+      if (value === "custom") {
+        return;
+      }
+
+      let newRange = { from: new Date(), to: new Date() };
+
+      try {
+        switch (value) {
+          case "today":
+            newRange = { from: new Date(), to: new Date() };
+            break;
+          case "yesterday": {
+            const yesterday = subDays(new Date(), 1);
+            newRange = { from: yesterday, to: yesterday };
+            break;
+          }
+          case "thisWeek":
+            newRange = {
+              from: startOfWeek(new Date(), { weekStartsOn: 1 }),
+              to: endOfWeek(new Date(), { weekStartsOn: 1 }),
+            };
+            break;
+          case "thisMonth":
+            newRange = {
+              from: startOfMonth(new Date()),
+              to: endOfMonth(new Date()),
+            };
+            break;
+          default:
+            break;
         }
 
-        const newFromDate = format(fromDate, "yyyy-MM-dd");
-        const newToDate = format(toDate, "yyyy-MM-dd");
-        
-        setDateRange({ from: fromDate, to: toDate });
-        setDateFilterType("custom");
-        
-        setSearchParams(prev => {
+        const newFromDate = format(newRange.from, "yyyy-MM-dd");
+        const newToDate = format(newRange.to, "yyyy-MM-dd");
+
+        setDateRange(newRange);
+
+        setSearchParams((prev) => {
           prev.set("from", newFromDate);
           prev.set("to", newToDate);
-          prev.set("dateFilter", "custom");
+          prev.set("dateFilter", value);
           return prev;
+        });
+
+        fetchBillsData({
+          startDate: newRange.from,
+          endDate: newRange.to,
         });
       } catch (err) {
         toast({
           title: "Error",
-          description: "Invalid date selection",
+          description: "Error setting date range",
           variant: "destructive",
         });
       }
-    }
-  }, [setSearchParams, toast]);
-
-  const handleDateFilterChange = useCallback((value) => {
-    setDateFilterType(value);
-
-    if (value === "custom") {
-      return;
-    }
-
-    let newRange = { from: new Date(), to: new Date() };
-
-    try {
-      switch (value) {
-        case "today":
-          newRange = { from: new Date(), to: new Date() };
-          break;
-        case "yesterday": {
-          const yesterday = subDays(new Date(), 1);
-          newRange = { from: yesterday, to: yesterday };
-          break;
-        }
-        case "thisWeek":
-          newRange = {
-            from: startOfWeek(new Date(), { weekStartsOn: 1 }),
-            to: endOfWeek(new Date(), { weekStartsOn: 1 }),
-          };
-          break;
-        case "thisMonth":
-          newRange = {
-            from: startOfMonth(new Date()),
-            to: endOfMonth(new Date()),
-          };
-          break;
-        default:
-          break;
-      }
-
-      const newFromDate = format(newRange.from, "yyyy-MM-dd");
-      const newToDate = format(newRange.to, "yyyy-MM-dd");
-      
-      setDateRange(newRange);
-
-      setSearchParams(prev => {
-        prev.set("from", newFromDate);
-        prev.set("to", newToDate);
-        prev.set("dateFilter", value);
-        return prev;
-      });
-
-      fetchBillsData({
-        startDate: newRange.from,
-        endDate: newRange.to,
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Error setting date range",
-        variant: "destructive",
-      });
-    }
-  }, [fetchBillsData, setSearchParams]);
+    },
+    [fetchBillsData, setSearchParams]
+  );
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -359,7 +378,7 @@ export default function SalesTransactions() {
 
       <div className="flex gap-2">
         <div className="relative">
-          <div className="relative flex items-center bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors overflow-hidden">
+          <div className="relative flex items-center bg-white rounded-lg border border-slate-300 hover:border-slate-400 transition-colors overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-0">
             <div className="relative flex items-center border-r border-slate-200">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -386,7 +405,7 @@ export default function SalesTransactions() {
                 <Search className="h-4 w-4 text-slate-400" />
               </div>
               <Input
-                className="w-full h-9 pl-10 pr-10 border-0 focus-visible:ring-0 placeholder:text-slate-400"
+                className="w-full h-9 pl-10 pr-10 border-0 focus-visible:ring-0"
                 placeholder={`Search by ${
                   searchType === "invoice" ? "invoice number" : "customer name"
                 }...`}
@@ -544,7 +563,7 @@ export default function SalesTransactions() {
 
       <div className="relative overflow-x-auto border-t">
         {filteredBills.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground font-semibold">
             {searchQuery ? (
               <>
                 <Search className="h-12 w-12 mb-4 text-gray-400" />
@@ -597,7 +616,9 @@ export default function SalesTransactions() {
                     {bill?.invoiceNumber}
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium capitalize">{bill?.customerName}</div>
+                    <div className="font-medium capitalize">
+                      {bill?.customerName}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {bill?.mob}
                     </div>
@@ -619,13 +640,13 @@ export default function SalesTransactions() {
                   </TableCell> */}
                   <TableCell>
                     <div className="font-medium">
-                    <p>
-                      {new Date(bill?.createdAt).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "2-digit",
-                      })}
-                    </p>
+                      <p>
+                        {new Date(bill?.createdAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "2-digit",
+                        })}
+                      </p>
                       <span className="text-xs text-gray-500">
                         {format(new Date(bill?.createdAt), "hh:mm a")}
                       </span>
@@ -684,15 +705,36 @@ export default function SalesTransactions() {
           { header: "Mobile", field: "mob", width: 15 },
           { header: "Invoice Date", field: "invoiceDate", width: 15 },
           { header: "Created By", field: "createdByName", width: 20 },
-          { header: "Bill Total", field: "billSummary.grandTotal", width: 15, format: "currency", addTotal: true },
-          { header: "Amount Paid", field: "amountPaid", width: 15, format: "currency", addTotal: true },
-          { header: "Due Amount", field: "dueAmount", width: 15, format: "currency", addTotal: true },
-          { header: "Payment Status", field: "paymentStatus", width: 15 }
+          {
+            header: "Bill Total",
+            field: "billSummary.grandTotal",
+            width: 15,
+            format: "currency",
+            addTotal: true,
+          },
+          {
+            header: "Amount Paid",
+            field: "amountPaid",
+            width: 15,
+            format: "currency",
+            addTotal: true,
+          },
+          {
+            header: "Due Amount",
+            field: "dueAmount",
+            width: 15,
+            format: "currency",
+            addTotal: true,
+          },
+          { header: "Payment Status", field: "paymentStatus", width: 15 },
         ]}
         formatters={{
-          "Invoice Date": (value) => new Date(value).toLocaleDateString("en-IN"),
-          "Due Amount": (value, row) => (row.billSummary?.grandTotal || 0) - (row.amountPaid || 0),
-          "Payment Status": (value) => value?.charAt(0).toUpperCase() + value?.slice(1) || "-"
+          "Invoice Date": (value) =>
+            new Date(value).toLocaleDateString("en-IN"),
+          "Due Amount": (value, row) =>
+            (row.billSummary?.grandTotal || 0) - (row.amountPaid || 0),
+          "Payment Status": (value) =>
+            value?.charAt(0).toUpperCase() + value?.slice(1) || "-",
         }}
         fileName="sales_transactions"
         title="Export Sales Transactions"

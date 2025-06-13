@@ -403,7 +403,10 @@ router.post("/edit", verifyToken, async (req, res) => {
   try {
     const { invoiceType, distributorId, _id, payments, ...details } = req.body;
 
-    if (!mongoose.isValidObjectId(distributorId) || !mongoose.isValidObjectId(_id)) {
+    if (
+      !mongoose.isValidObjectId(distributorId) ||
+      !mongoose.isValidObjectId(_id)
+    ) {
       throw Error("Invalid distributor ID or invoice ID");
     }
 
@@ -413,12 +416,17 @@ router.post("/edit", verifyToken, async (req, res) => {
       throw new Error("Invoice not found");
     }
 
-    if (existingInvoice.status !== "draft" && existingInvoice.status !== "active") {
+    if (
+      existingInvoice.status !== "draft" &&
+      existingInvoice.status !== "active"
+    ) {
       throw new Error("Cannot edit invoice in current status");
     }
 
     // Fetch distributor details
-    const distributorDetails = await Distributor.findById(distributorId).session(session);
+    const distributorDetails = await Distributor.findById(
+      distributorId
+    ).session(session);
     if (!distributorDetails) {
       throw new Error("Distributor not found");
     }
@@ -434,10 +442,12 @@ router.post("/edit", verifyToken, async (req, res) => {
 
     // Process product changes
     for (const product of req.body.products) {
-      const { inventoryId, batchId, quantity, free = 0, } = product;
-      
+      const { inventoryId, batchId, quantity, free = 0 } = product;
+
       // Find inventory and validate
-      const inventorySchema = await Inventory.findById(inventoryId).session(session);
+      const inventorySchema = await Inventory.findById(inventoryId).session(
+        session
+      );
       if (!inventorySchema) {
         throw new Error(`Inventory not found: ${inventoryId}`);
       }
@@ -475,12 +485,24 @@ router.post("/edit", verifyToken, async (req, res) => {
       });
 
       if (oldProductBatchMap.has(String(product.batchId))) {
-        const oldProduct = existingInvoice.products[oldProductBatchMap.get(String(product.batchId))];
-        if (deepEqualObject(JSON.parse(JSON.stringify(oldProduct)), JSON.parse(JSON.stringify(product)), ["_id", "timeline", "batchId", "inventoryId"])) {
+        const oldProduct =
+          existingInvoice.products[
+            oldProductBatchMap.get(String(product.batchId))
+          ];
+        if (
+          deepEqualObject(
+            JSON.parse(JSON.stringify(oldProduct)),
+            JSON.parse(JSON.stringify(product)),
+            ["_id", "timeline", "batchId", "inventoryId"]
+          )
+        ) {
           oldProductBatchMap.delete(String(product.batchId));
           continue;
         } else {
-          if (product.quantity === oldProduct.quantity && product.pack === oldProduct.pack) {
+          if (
+            product.quantity === oldProduct.quantity &&
+            product.pack === oldProduct.pack
+          ) {
             // Only non-quantity fields changed
             newTimeline.balance = inventorySchema.quantity;
             await newTimeline.save({ session });
@@ -539,7 +561,9 @@ router.post("/edit", verifyToken, async (req, res) => {
     for (const [batchId, oldProductIndex] of oldProductBatchMap.entries()) {
       const oldProduct = existingInvoice.products[oldProductIndex];
       const oldBatch = await InventoryBatch.findById(batchId).session(session);
-      const oldInventorySchema = await Inventory.findById(oldProduct.inventoryId).session(session);
+      const oldInventorySchema = await Inventory.findById(
+        oldProduct.inventoryId
+      ).session(session);
 
       const oldQuantity = oldProduct.quantity + (oldProduct.free || 0);
       oldInventorySchema.quantity -= oldQuantity;
@@ -562,7 +586,7 @@ router.post("/edit", verifyToken, async (req, res) => {
 
       oldInventorySchema.timeline.push(reverseTimeline._id);
       oldInventorySchema.purchases = oldInventorySchema.purchases.filter(
-        purchaseId => purchaseId.toString() !== existingInvoice._id.toString()
+        (purchaseId) => purchaseId.toString() !== existingInvoice._id.toString()
       );
 
       await oldInventorySchema.save({ session });
@@ -573,14 +597,21 @@ router.post("/edit", verifyToken, async (req, res) => {
     // Handle payment changes
     if (payments && payments.length > 0) {
       for (const payment of payments) {
-        const existingPayment = await Payment.findById(payment._id).session(session);
+        const existingPayment = await Payment.findById(payment._id).session(
+          session
+        );
         if (!existingPayment) {
           throw new Error(`Payment not found: ${payment._id}`);
         }
 
         // If payment method is not CHEQUE and amount has changed, update account balance
-        if (existingPayment.paymentMethod !== "CHEQUE" && existingPayment.amount !== payment.amount) {
-          const account = await AccountDetails.findById(existingPayment.accountId).session(session);
+        if (
+          existingPayment.paymentMethod !== "CHEQUE" &&
+          existingPayment.amount !== payment.amount
+        ) {
+          const account = await AccountDetails.findById(
+            existingPayment.accountId
+          ).session(session);
           if (!account) {
             throw new Error("Account not found for payment");
           }
@@ -597,10 +628,17 @@ router.post("/edit", verifyToken, async (req, res) => {
     }
 
     // Update distributor balance
-    if (!(existingInvoice.distributorId.toString() === distributorDetails._id.toString() && existingInvoice.amountPaid === details.amountPaid)) {
-      const oldDue = (existingInvoice.grandTotal || 0) - (existingInvoice.amountPaid || 0);
+    if (
+      !(
+        existingInvoice.distributorId.toString() ===
+          distributorDetails._id.toString() &&
+        existingInvoice.amountPaid === details.amountPaid
+      )
+    ) {
+      const oldDue =
+        (existingInvoice.grandTotal || 0) - (existingInvoice.amountPaid || 0);
       const newDue = (details.grandTotal || 0) - (details.amountPaid || 0);
-      
+
       // Create ledger entry for balance update
       const ledgerEntry = new Ledger({
         distributorId: distributorDetails._id,
@@ -612,8 +650,9 @@ router.post("/edit", verifyToken, async (req, res) => {
       });
       await ledgerEntry.save({ session });
       distributorDetails.ledger.push(ledgerEntry._id);
-      
-      distributorDetails.currentBalance = distributorDetails.currentBalance - oldDue + newDue;
+
+      distributorDetails.currentBalance =
+        distributorDetails.currentBalance - oldDue + newDue;
       await distributorDetails.save({ session });
     }
 
@@ -911,21 +950,22 @@ router.post("/return", verifyToken, async (req, res) => {
     if (refundDetails && refundDetails.amount > 0) {
       const refundAmount = Number(refundDetails.amount);
 
-      // Pharmacy's account update (always happens if refund details are valid)
-      if (refundDetails.method !== "CHEQUE") {
+      // If refund is by cheque, no further action is needed on accounts
+      if (refundDetails.mode !== "CHEQUE") {
+        // Shop's account update (always happens if refund details are valid)
         if (!refundDetails.accountId) {
           throw new Error(
-            "Account ID is required for non-cheque refunds to update pharmacy balance."
+            "Account ID is required for non-cheque refunds to update shop balance."
           );
         }
-        const account = await AccountDetails.findById(
+        const shopAccount = await AccountDetails.findById(
           refundDetails.accountId
         ).session(session);
-        if (!account) {
-          throw new Error("Refund account (pharmacy's) not found.");
+        if (!shopAccount) {
+          throw new Error("Refund account (shop's) not found.");
         }
-        account.balance += refundAmount;
-        await account.save({ session });
+
+        shopAccount.balance -= refundAmount;
       }
 
       const paymentNumber = await Payment.getNextPaymentNumber(session);
@@ -1296,6 +1336,7 @@ router.get("/inventory/:inventoryId", verifyToken, async (req, res) => {
           invoiceId: purchase._id,
           invoiceNumber: purchase.invoiceNumber,
           distributorName: purchase.distributorName,
+          isBatchTracked: product.isBatchTracked,
           distributorMob: purchase.mob,
           batchNumber: product.batchNumber,
           batchId: product.batchId,
@@ -1331,8 +1372,6 @@ router.get("/inventory/:inventoryId", verifyToken, async (req, res) => {
 // LLM Image Preprocessing Route
 router.post("/llm/preprocessImage", verifyToken, async (req, res) => {
   try {
-  
-
     const { imageBase64, mimeType } = req.body;
 
     if (!imageBase64 || !mimeType) {
@@ -1347,7 +1386,6 @@ router.post("/llm/preprocessImage", verifyToken, async (req, res) => {
         .json({ message: "Invalid MIME type. Only images are allowed." });
     }
 
-   
     const extractedData = await llmProcessing(imageBase64, mimeType);
 
     res.status(200).json({

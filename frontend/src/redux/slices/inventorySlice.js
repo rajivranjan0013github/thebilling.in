@@ -9,11 +9,11 @@ const initialState = {
   error: null,
 };
 
-// create or update item
-export const manageInventory = createLoadingAsyncThunk(
-  "inventory/manageInventory",
+// create new item
+export const createInventory = createLoadingAsyncThunk(
+  "inventory/createInventory",
   async (itemData) => {
-    const response = await fetch(`${Backend_URL}/api/inventory/manage-inventory`, {
+    const response = await fetch(`${Backend_URL}/api/inventory`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,11 +29,34 @@ export const manageInventory = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// update existing item
+export const updateInventory = createLoadingAsyncThunk(
+  "inventory/updateInventory",
+  async (itemData) => {
+    const { _id, ...updateData } = itemData;
+    const response = await fetch(`${Backend_URL}/api/inventory/${_id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updateData),
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update item");
+    }
+    return response.json();
+  },
+  { useGlobalLoader: true }
+);
+
 // Thunk for fetching items
 export const fetchItems = createLoadingAsyncThunk(
   "inventory/fetchItems",
   async () => {
-    const response = await fetch(`${Backend_URL}/api/inventory`, {credentials: "include"});
+    const response = await fetch(`${Backend_URL}/api/inventory`, {
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error("Failed to fetch items");
     }
@@ -50,7 +73,7 @@ const inventorySlice = createSlice({
   reducers: {
     setItemStatusIdle: (state) => {
       state.itemsStatus = "idle";
-      state.manageItemStatus = 'idle';
+      state.manageItemStatus = "idle";
       state.items = [];
       state.error = null;
     },
@@ -68,22 +91,35 @@ const inventorySlice = createSlice({
         state.itemsStatus = "failed";
         state.error = action.error.message;
       })
-      .addCase(manageInventory.pending, (state) => {
+      // Create inventory cases
+      .addCase(createInventory.pending, (state) => {
         state.manageItemStatus = "loading";
       })
-      .addCase(manageInventory.fulfilled, (state, action) => {
+      .addCase(createInventory.fulfilled, (state, action) => {
         state.manageItemStatus = "succeeded";
-        const itemIndex = state.items.findIndex(item => item._id === action.payload._id);
-        if (itemIndex !== -1) {
-          state.items[itemIndex] = action.payload;
-        } else {
-          state.items.unshift(action.payload);
-        }
+        state.items.unshift(action.payload);
       })
-      .addCase(manageInventory.rejected, (state, action) => {
+      .addCase(createInventory.rejected, (state, action) => {
         state.manageItemStatus = "failed";
         state.error = action.error.message;
       })
+      // Update inventory cases
+      .addCase(updateInventory.pending, (state) => {
+        state.manageItemStatus = "loading";
+      })
+      .addCase(updateInventory.fulfilled, (state, action) => {
+        state.manageItemStatus = "succeeded";
+        const itemIndex = state.items.findIndex(
+          (item) => item._id === action.payload._id
+        );
+        if (itemIndex !== -1) {
+          state.items[itemIndex] = action.payload;
+        }
+      })
+      .addCase(updateInventory.rejected, (state, action) => {
+        state.manageItemStatus = "failed";
+        state.error = action.error.message;
+      });
   },
 });
 

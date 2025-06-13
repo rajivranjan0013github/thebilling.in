@@ -5,30 +5,28 @@ import { Button } from "../components/ui/button";
 import { format } from "date-fns";
 import { ArrowLeft, Printer, Send, FileDown } from "lucide-react";
 import { useSelector } from "react-redux";
-import { formatCurrency } from '../utils/Helper';
+import { formatCurrency } from "../utils/Helper";
 
 const PaymentInvoicePrint = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const printRef = useRef();
   const [pageSize, setPageSize] = useState("A4"); // A4 or A5
-  const paymentData = location.state?.paymentData;
-  const hospitalInfo = useSelector((state) => state.pharmacy.pharmacyInfo);
-
-  
+  const { paymentData } = location.state || {};
+  const shopInfo = useSelector((state) => state.shop.shopInfo);
 
   // Add useEffect for keyboard shortcut
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
         e.preventDefault(); // Prevent default browser print dialog
         handlePrint();
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [paymentData, shopInfo]);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
@@ -125,15 +123,20 @@ const PaymentInvoicePrint = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={handlePrint} size='sm'>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={handlePrint}
+              size="sm"
+            >
               <Printer className="w-4 h-4" />
               Print Now (Ctrl + P)
             </Button>
-            <Button variant="outline" className="gap-2" size='sm'>
+            <Button variant="outline" className="gap-2" size="sm">
               <Send className="w-4 h-4" />
               Send Receipt (F2)
             </Button>
-            <Button variant="outline" className="gap-2" size='sm'>
+            <Button variant="outline" className="gap-2" size="sm">
               <FileDown className="w-4 h-4" />
               Export as PDF (F4)
             </Button>
@@ -157,11 +160,16 @@ const PaymentInvoicePrint = () => {
           <div className="grid grid-cols-6 gap-3">
             {/* Logo */}
             <div className="border-r-[1px] border-gray-800">
-              <div className="w-full border-b-[1px] border-gray-800 p-1 text-xs" style={{backgroundColor: '#e5e7eb'}}>PAYMENT RECEIPT</div>
-              {hospitalInfo?.logoUsable && (
+              <div
+                className="w-full border-b-[1px] border-gray-800 p-1 text-xs"
+                style={{ backgroundColor: "#e5e7eb" }}
+              >
+                PAYMENT RECEIPT
+              </div>
+              {shopInfo?.logoUsable && (
                 <div className="w-auto h-[78px] p-1">
                   <img
-                    src={hospitalInfo.logoUsable}
+                    src={shopInfo.logoUsable}
                     alt="Logo"
                     className="w-full h-full object-contain"
                   />
@@ -171,18 +179,18 @@ const PaymentInvoicePrint = () => {
 
             {/* Business Info */}
             <div className="col-span-3 gap-2 py-1">
-              <h2 className="font-semibold uppercase text-xl">
-                {hospitalInfo?.name || "Your Pharmacy Name"}
-              </h2>
-              <p className="text-sm leading-snug">
-                {hospitalInfo?.address || "Pharmacy Address"}
-              </p>
+              <div className="text-center">
+                <h1 className="text-2xl font-bold">
+                  {shopInfo?.name || "Your Shop Name"}
+                </h1>
+                <p className="text-sm">{shopInfo?.address || "Shop Address"}</p>
+              </div>
               <div className="text-sm space-x-6">
-                <span>Mob No: {hospitalInfo?.contactNumber}</span>
-                <span>DL: {hospitalInfo?.drugLicenceNumber}</span>
+                <span>Mob No: {shopInfo?.contactNumber}</span>
+                <span>DL: {shopInfo?.drugLicenceNumber}</span>
               </div>
               <div className="text-sm">
-                <span>GSTIN: {hospitalInfo?.gstNumber}</span>
+                <span>GSTIN: {shopInfo?.gstNumber}</span>
               </div>
             </div>
 
@@ -197,7 +205,9 @@ const PaymentInvoicePrint = () => {
               <div className="text-xs font-medium p-2">
                 <div className="grid grid-cols-3">
                   <span>Name:</span>
-                  <span className="col-span-2 capitalize">{paymentData.distributorName}</span>
+                  <span className="col-span-2 capitalize">
+                    {paymentData.distributorName}
+                  </span>
                 </div>
                 <div className="grid grid-cols-3">
                   <span>Type:</span>
@@ -213,12 +223,24 @@ const PaymentInvoicePrint = () => {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-200 border-b-[1px] border-gray-800">
-                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">S.No</th>
-                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">Invoice No</th>
-                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">Type</th>
-                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">Date</th>
-                <th className="border-r-[1px] border-gray-800 font-medium p-1.5 text-right">Invoice Amount</th>
-                <th className="border-r-[1px] border-gray-800 font-medium p-1.5 text-right">Amount Settled</th>
+                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">
+                  S.No
+                </th>
+                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">
+                  Invoice No
+                </th>
+                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">
+                  Type
+                </th>
+                <th className="border-r-[1px] border-gray-800 font-medium p-1.5">
+                  Date
+                </th>
+                <th className="border-r-[1px] border-gray-800 font-medium p-1.5 text-right">
+                  Invoice Amount
+                </th>
+                <th className="border-r-[1px] border-gray-800 font-medium p-1.5 text-right">
+                  Amount Settled
+                </th>
                 <th className="font-medium p-1.5 text-center">Status</th>
               </tr>
             </thead>
@@ -275,7 +297,15 @@ const PaymentInvoicePrint = () => {
                   </td>
                 </tr>
               ))}
-              {[...Array(Math.max(0, 10 - (paymentData.bills.length + paymentData.salesBills.length)))].map((_, index) => (
+              {[
+                ...Array(
+                  Math.max(
+                    0,
+                    10 -
+                      (paymentData.bills.length + paymentData.salesBills.length)
+                  )
+                ),
+              ].map((_, index) => (
                 <tr key={`empty-${index}`}>
                   <td className="border-r-[1px] border-gray-800 text-center p-1.5"></td>
                   <td className="border-r-[1px] border-gray-800 pl-2 p-1.5"></td>
@@ -294,14 +324,16 @@ const PaymentInvoicePrint = () => {
         <div className="grid grid-cols-7 border-b-[1px] border-l-[1px] border-r-[1px] border-gray-800">
           <div className="flex items-end justify-center pb-3 col-span-2">
             <div className="inline-block">
-              <p className="font-medium text-xs text-gray-700">Authorized Signatory</p>
+              <p className="font-medium text-xs text-gray-700">
+                Authorized Signatory
+              </p>
             </div>
           </div>
 
           {/* Remarks Section */}
           <div className="col-span-3 border-r-[1px] border-l-[1px] border-gray-800 p-2">
             <p className="text-xs font-medium">Remarks:</p>
-            <p className="text-xs">{paymentData.remarks || ''}</p>
+            <p className="text-xs">{paymentData.remarks || ""}</p>
           </div>
 
           {/* Payment Summary */}
@@ -319,14 +351,19 @@ const PaymentInvoicePrint = () => {
                   </div>
                   <div className="flex justify-between px-2">
                     <span>Cheque Date:</span>
-                    <span>{paymentData.chequeDate ? format(new Date(paymentData.chequeDate), "dd-MM-yyyy") : ''}</span>
+                    <span>
+                      {paymentData.chequeDate
+                        ? format(new Date(paymentData.chequeDate), "dd-MM-yyyy")
+                        : ""}
+                    </span>
                   </div>
                 </>
               )}
-              {(paymentData.paymentMethod === "UPI" || paymentData.paymentMethod === "BANK") && (
+              {(paymentData.paymentMethod === "UPI" ||
+                paymentData.paymentMethod === "BANK") && (
                 <div className="flex justify-between px-2">
                   <span>Transaction No:</span>
-                  <span>{paymentData.transactionNumber || 'N/A'}</span>
+                  <span>{paymentData.transactionNumber || "N/A"}</span>
                 </div>
               )}
               <div className="flex justify-between border-t-[1px] border-b-[1px] border-gray-800 font-medium bg-gray-200 py-1 px-2 text-sm box-border">

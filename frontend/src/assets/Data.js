@@ -11,8 +11,19 @@ import { format, subMonths, isBefore } from "date-fns";
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thebilling.in";
-// export const Backend_URL = "http://localhost:3000";
+// export const Backend_URL = "https://thebilling.in";
+export const Backend_URL = "http://localhost:3000";
+
+export const primaryUnit = [
+  "Piece", "Unit", "Box", "Carton", "Packet", "Dozen", "Set", "Pair", "Package",
+  "Bundle", "Roll", "Sheet", "Strip", "Bottle", "Can", "Jar", "Sachet", "Barrel", "Tube", "Reel", "Case", "Tray", "Pallet",
+  "Kilogram (kg)", "Gram (g)", "Ton", "Milligram (mg)", "Quintal", "Ounce (oz)", "Pound (lb)",
+  "Liter (L)", "Milliliter (ml)", "Gallon", "Pint", "Cubic Meter (m³)", "Cubic Centimeter (cm³)", "Bucket", "Drum",
+  "Meter (m)", "Centimeter (cm)", "Millimeter (mm)", "Kilometer (km)", "Inch", "Foot", "Yard",
+  "Square Meter (m²)", "Square Foot (ft²)", "Square Inch (in²)", "Hectare", "Acre",
+  "Cubic Foot (ft³)",
+ 
+];
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -244,7 +255,7 @@ export function numberToWords(number) {
 }
 
 export const s3Domain =
-  "https://thousandwayspharmacy.s3.ap-south-1.amazonaws.com";
+  "https://thousandwayshospital.s3.ap-south-1.amazonaws.com";
 
 export const convertToFraction = (num) => {
   const value = Number(num);
@@ -252,14 +263,14 @@ export const convertToFraction = (num) => {
   return ans;
 };
 
-export const convertQuantity = (qty, pack = 1) => {
+export const convertQuantity = (qty, pack = 1, primaryUnit, secondaryUnit) => {
   if (!qty) return "-";
   const packs = Math.floor(Number(qty) / Number(pack));
   const loose = qty % Number(pack);
   if (loose) {
-    return `${packs} packs, ${loose} units`;
+    return `${packs} ${primaryUnit || "packs"}, ${loose} ${secondaryUnit || "units"}`;
   }
-  return `${packs} packs`;
+  return `${packs} ${primaryUnit || "packs"}`;
 };
 
 export const convertQuantityValue = (qty, pack = 1) => {

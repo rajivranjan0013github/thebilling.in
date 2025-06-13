@@ -120,8 +120,11 @@ router.post("/", verifyToken, async (req, res) => {
     for (const product of details.products) {
       const { inventoryId, batchNumber, batchId, quantity, types } = product;
 
-      const inventorySchema = await Inventory.findById(inventoryId).session(session);
-      if (!inventorySchema) throw new Error(`Inventory not found : ${inventoryId}`);
+      const inventorySchema = await Inventory.findById(inventoryId).session(
+        session
+      );
+      if (!inventorySchema)
+        throw new Error(`Inventory not found : ${inventoryId}`);
 
       const batch = await InventoryBatch.findById(batchId).session(session);
       if (!batch) throw new Error(`Batch not found : ${batchId}`);
@@ -133,7 +136,7 @@ router.post("/", verifyToken, async (req, res) => {
         type: types === "return" ? "SALE_RETURN" : "SALE",
         invoiceNumber: invoiceNumber,
         batchNumber,
-        pack : batch.pack,
+        pack: batch.pack,
         createdBy: req?.user._id,
         createdByName: req?.user?.name,
         name: details.customerName,
@@ -156,7 +159,7 @@ router.post("/", verifyToken, async (req, res) => {
 
       // Add sales bill reference to inventory's sales array
       inventorySchema.sales.push(newSalesBill._id);
-      
+
       inventorySchema.timeline.push(timeline._id);
       await inventorySchema.save({ session });
     }
@@ -286,7 +289,9 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
       if (!mongoose.isValidObjectId(details.customerId)) {
         throw Error("Customer Id is not valid");
       }
-      customerDetails = await Customer.findById(details.customerId).session(session);
+      customerDetails = await Customer.findById(details.customerId).session(
+        session
+      );
       if (!customerDetails) {
         throw Error("Customer not found");
       }
@@ -298,11 +303,14 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
     });
 
     // product changes
-    for(const product of details.products){
-      const { inventoryId, batchId, quantity,types } = product;
+    for (const product of details.products) {
+      const { inventoryId, batchId, quantity, types } = product;
       // Find inventory and validate
-      const inventorySchema = await Inventory.findById(inventoryId).session(session); // new inventory schema
-      if (!inventorySchema) throw new Error(`Inventory not found: ${inventoryId}`); 
+      const inventorySchema = await Inventory.findById(inventoryId).session(
+        session
+      ); // new inventory schema
+      if (!inventorySchema)
+        throw new Error(`Inventory not found: ${inventoryId}`);
       // Find batch and validate
       const batch = await InventoryBatch.findById(batchId).session(session); // new batch schema
       if (!batch) throw new Error(`Batch not found: ${batchId}`);
@@ -313,7 +321,7 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
         type: "SALE_EDIT_REVERSE",
         invoiceNumber: existingInvoice.invoiceNumber,
         batchNumber: batch.batchNumber,
-        pack : batch.pack,
+        pack: batch.pack,
         createdBy: req.user._id,
         createdByName: req?.user?.name,
         name: details.customerName,
@@ -326,21 +334,40 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
         type: "SALE_EDIT",
         invoiceNumber: existingInvoice.invoiceNumber,
         batchNumber: batch.batchNumber,
-        pack : batch.pack,
+        pack: batch.pack,
         createdBy: req.user._id,
         createdByName: req?.user?.name,
         name: details.customerName,
         mob: customerDetails?.mob || "",
       });
 
-      if(oldProductBatchMap.has(String(product.batchId))){
-        const oldProduct = existingInvoice.products[oldProductBatchMap.get(String(product.batchId))];
-        if(deepEqualObject(JSON.parse(JSON.stringify(oldProduct)), JSON.parse(JSON.stringify(product)), ["_id", "timeline", "batchId", "inventoryId", "purchaseRate", "mfcName"])){
-        
+      if (oldProductBatchMap.has(String(product.batchId))) {
+        const oldProduct =
+          existingInvoice.products[
+            oldProductBatchMap.get(String(product.batchId))
+          ];
+        if (
+          deepEqualObject(
+            JSON.parse(JSON.stringify(oldProduct)),
+            JSON.parse(JSON.stringify(product)),
+            [
+              "_id",
+              "timeline",
+              "batchId",
+              "inventoryId",
+              "purchaseRate",
+              "mfcName",
+            ]
+          )
+        ) {
           oldProductBatchMap.delete(String(product.batchId));
           continue;
         } else {
-          if(product.quantity === oldProduct.quantity && product.pack === oldProduct.pack && product.types === oldProduct.types){
+          if (
+            product.quantity === oldProduct.quantity &&
+            product.pack === oldProduct.pack &&
+            product.types === oldProduct.types
+          ) {
             newTimeline.balance = inventorySchema.quantity;
             await newTimeline.save({ session });
             inventorySchema.timeline.push(newTimeline._id);
@@ -365,9 +392,10 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
         oldProductBatchMap.delete(String(product.batchId));
       } else {
         // Check if sufficient stock exists for sales
-        if (types !== "return" && batch.quantity < quantity) throw new Error(
-          `Insufficient stock for ${inventorySchema.name} in batch ${product.batchNumber}`
-        );
+        if (types !== "return" && batch.quantity < quantity)
+          throw new Error(
+            `Insufficient stock for ${inventorySchema.name} in batch ${product.batchNumber}`
+          );
 
         // Update quantities based on sale or return type
         if (types === "return") {
@@ -395,45 +423,82 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
     }
 
     // reverse the old timeline
-    for(const [batchId, oldProductIndex] of oldProductBatchMap.entries()){
+    for (const [batchId, oldProductIndex] of oldProductBatchMap.entries()) {
       const oldProduct = existingInvoice.products[oldProductIndex];
+      // Try to fetch the batch. It might have been deleted since the original sale.
       const oldBatch = await InventoryBatch.findById(batchId).session(session);
-      const oldInventorySchema = await Inventory.findById(oldBatch.inventoryId).session(session);
-      oldInventorySchema.quantity += oldProduct.quantity;
-      oldBatch.quantity += oldProduct.quantity;
-      
+
+      // Determine the related inventory document. If the batch is missing, fall back to the product's original inventoryId.
+      let oldInventorySchema = null;
+      if (oldBatch && oldBatch.inventoryId) {
+        oldInventorySchema = await Inventory.findById(
+          oldBatch.inventoryId
+        ).session(session);
+      } else {
+        oldInventorySchema = await Inventory.findById(
+          oldProduct.inventoryId
+        ).session(session);
+      }
+
+      // Restore quantities only when the related documents still exist
+      if (oldInventorySchema) {
+        oldInventorySchema.quantity += oldProduct.quantity;
+        await oldInventorySchema.save({ session });
+      }
+      if (oldBatch) {
+        oldBatch.quantity += oldProduct.quantity;
+        await oldBatch.save({ session });
+      }
+
       const reverseTimeline = new StockTimeline({
-        inventoryId: oldBatch.inventoryId,
+        inventoryId: oldInventorySchema?._id || oldProduct.inventoryId,
         invoiceId: existingInvoice._id,
         type: "SALE_EDIT_REVERSE",
         invoiceNumber: existingInvoice.invoiceNumber,
-        batchNumber: oldBatch.batchNumber,
-        credit: oldProduct.quantity,
-        balance: oldInventorySchema.quantity,
-        pack : oldBatch.pack,
+        batchNumber: oldBatch?.batchNumber || oldProduct.batchNumber,
+        credit: oldProduct?.quantity,
+        balance: oldInventorySchema?.quantity,
+        pack: oldBatch?.pack || oldProduct.pack,
         createdBy: req.user._id,
         createdByName: req?.user?.name,
         name: existingInvoice.customerName,
         mob: existingInvoice.mob,
       });
-      oldInventorySchema.timeline.push(reverseTimeline._id);
-      oldInventorySchema.sales = oldInventorySchema.sales.filter(saleId => saleId.toString() !== existingInvoice._id.toString());
-      await oldInventorySchema.save({ session });
-      await oldBatch.save({ session });
+
       await reverseTimeline.save({ session });
+
+      // Update inventory's timeline & sales references if inventory still exists
+      if (oldInventorySchema) {
+        oldInventorySchema.timeline = oldInventorySchema.timeline || [];
+        oldInventorySchema.timeline.push(reverseTimeline._id);
+        oldInventorySchema.sales = (oldInventorySchema.sales || []).filter(
+          (saleId) => saleId.toString() !== existingInvoice._id.toString()
+        );
+        await oldInventorySchema.save({ session });
+      }
     }
 
     // Save customer changes if any
-    if (customerDetails && !(existingInvoice.customerId.toString() === customerDetails._id.toString() && existingInvoice.amountPaid === details.amountPaid)) {
-      const oldCustomer = await Customer.findById(existingInvoice.customerId).session(session);
+    if (
+      customerDetails &&
+      !(
+        existingInvoice.customerId.toString() ===
+          customerDetails._id.toString() &&
+        existingInvoice.amountPaid === details.amountPaid
+      )
+    ) {
+      const oldCustomer = await Customer.findById(
+        existingInvoice.customerId
+      ).session(session);
       const newDue = (details.grandTotal || 0) - (details.amountPaid || 0);
-      const oldDue = (existingInvoice.grandTotal || 0) - (existingInvoice.amountPaid || 0);
+      const oldDue =
+        (existingInvoice.grandTotal || 0) - (existingInvoice.amountPaid || 0);
       oldCustomer.currentBalance -= oldDue;
       // Ledger entry reverse transaction
       const ledgerEntryForOldCustomer = new Ledger({
         customerId: oldCustomer._id,
         balance: oldCustomer.currentBalance,
-        credit : existingInvoice.grandTotal || 0, 
+        credit: existingInvoice.grandTotal || 0,
         debit: existingInvoice.amountPaid || 0, // New sales amount
         invoiceNumber: existingInvoice.invoiceNumber,
         description: "Sales invoice edit - Reverse Transaction",
@@ -459,16 +524,17 @@ router.post("/invoice/:id", verifyToken, async (req, res) => {
 
     // Handle payment if provided -- payment changes
     if (payments && payments.length > 0) {
-     
       for (const payment of payments) {
-        const existingPayment = await Payment.findById(payment._id).session(session);
+        const existingPayment = await Payment.findById(payment._id).session(
+          session
+        );
         if (!existingPayment) {
           throw new Error(`Payment not found: ${payment._id}`);
         }
         existingPayment.amount = payment.amount;
         await existingPayment.save({ session });
       }
-    } 
+    }
 
     // Update the existing invoice with new details
     Object.assign(existingInvoice, {
@@ -536,7 +602,7 @@ router.delete("/invoice/:id", verifyToken, async (req, res) => {
         inventoryId: inventoryId,
         invoiceId: invoice._id,
         type: "SALE_DELETE",
-        pack : batch.pack,
+        pack: batch.pack,
         invoiceNumber: invoice.invoiceNumber,
         credit: quantity,
         balance: inventory.quantity,
@@ -556,7 +622,7 @@ router.delete("/invoice/:id", verifyToken, async (req, res) => {
     }
 
     // delete payments
-    for(const payment of invoice.payments){
+    for (const payment of invoice.payments) {
       await Payment.findByIdAndDelete(payment._id).session(session);
     }
 
@@ -691,19 +757,23 @@ router.get("/inventory/:inventoryId", verifyToken, async (req, res) => {
 
     // Get total count from the sales array
     const totalSales = inventory.sales.length;
-    const totalPages = Math.ceil(totalSales / limit); 
+    const totalPages = Math.ceil(totalSales / limit);
 
     // Format the response data
     const salesHistory = inventory.sales
       .map((sale) => {
-        const product = sale.products.find(p => p.inventoryId && p.inventoryId.toString() === inventoryId.toString());
+        const product = sale.products.find(
+          (p) =>
+            p.inventoryId && p.inventoryId.toString() === inventoryId.toString()
+        );
         if (!product) return null;
-        
+
         return {
           _id: sale._id,
           createdAt: sale.createdAt,
           invoiceId: sale._id,
           invoiceNumber: sale.invoiceNumber,
+          isBatchTracked: product.isBatchTracked,
           customerName: sale.customerName,
           distributorName: sale.distributorName || sale.customerName,
           distributorMob: sale.mob,

@@ -1,9 +1,9 @@
 import express from "express";
 import { verifySuperAdmin } from "../middleware/SuperAdminMiddleWare.js";
-import { Pharmacy } from "../models/Pharmacy.js";
+import { Shop } from "../models/Shop.js";
 import mongoose from "mongoose";
 import cookie from "cookie";
-import { identifyPharmacy } from "../middleware/pharmacyMiddleware.js";
+import { identifyShop } from "../middleware/shopMiddleware.js";
 import { presignedUrl } from "../s3.js";
 import AccountDetails from "../models/AccountDetails.js";
 
@@ -14,24 +14,24 @@ router.post("/create", verifySuperAdmin, async (req, res) => {
   session.startTransaction();
 
   try {
-    const existingPharmacy = await Pharmacy.findOne({
-      pharmacyId: req.body.pharmacyId,
+    const existingShop = await Shop.findOne({
+      shopId: req.body.shopId,
     }).session(session);
-    if (existingPharmacy) {
+    if (existingShop) {
       await session.abortTransaction();
       session.endSession();
       return res
         .status(400)
-        .json({ message: "A pharmacy with this ID already exists" });
+        .json({ message: "A shop with this ID already exists" });
     }
 
-    const newPharmacy = new Pharmacy({
+    const newShop = new Shop({
       ...req.body,
     });
 
-    const savedPharmacy = await newPharmacy.save({ session });
+    const savedShop = await newShop.save({ session });
 
-    // Create default accounts for the pharmacy
+    // Create default accounts for the shop
     const currentDate = new Date();
 
     // Create Cash Account
@@ -78,8 +78,8 @@ router.post("/create", verifySuperAdmin, async (req, res) => {
     session.endSession();
 
     res.status(201).json({
-      message: "Pharmacy created successfully with default accounts",
-      pharmacy: savedPharmacy,
+      message: "Shop created successfully with default accounts",
+      shop: savedShop,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -88,65 +88,65 @@ router.post("/create", verifySuperAdmin, async (req, res) => {
   }
 });
 
-// New route to fetch pharmacy details
-router.get("/getPharmacy", async (req, res) => {
+// New route to fetch shop details
+router.get("/getShop", async (req, res) => {
   try {
     const cookies = cookie.parse(req.headers.cookie || "");
-    const pharmacyId = cookies?.pharmacyId;
-    if (!pharmacyId) {
-      return res.status(400).json({ error: "pharmacy not specified" });
+    const shopId = cookies?.shopId;
+    if (!shopId) {
+      return res.status(400).json({ error: "shop not specified" });
     }
 
-    const pharmacy = await Pharmacy.findOne({ pharmacyId });
-    if (!pharmacy) {
-      return res.status(404).json({ message: "Pharmacy not found" });
+    const shop = await Shop.findOne({ shopId });
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
     }
-    res.status(200).json(pharmacy);
+    res.status(200).json(shop);
   } catch (error) {
     res.status(500).json({
-      message: "Error fetching pharmacy details",
+      message: "Error fetching shop details",
       error: error.message,
     });
   }
 });
 
-// New route to update pharmacy information
-router.post("/:pharmacyId", async (req, res) => {
+// New route to update shop information
+router.post("/:shopId", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const pharmacy = await Pharmacy.findOne({
-      pharmacyId: req.params.pharmacyId,
+    const shop = await Shop.findOne({
+      shopId: req.params.shopId,
     }).session(session);
-    if (!pharmacy) {
+    if (!shop) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({ message: "Pharmacy not found" });
+      return res.status(404).json({ message: "Shop not found" });
     }
 
     // Update all fields, including the new category fields
-    Object.assign(pharmacy, req.body);
+    Object.assign(shop, req.body);
 
-    const updatedPharmacy = await pharmacy.save({ session });
+    const updatedShop = await shop.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
     res.status(200).json({
-      message: "Pharmacy updated successfully",
-      pharmacy: updatedPharmacy,
+      message: "Shop updated successfully",
+      shop: updatedShop,
     });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     res
       .status(400)
-      .json({ message: "Error updating pharmacy", error: error.message });
+      .json({ message: "Error updating shop", error: error.message });
   }
 });
 
-router.get("/getUploadUrl", identifyPharmacy, async (req, res) => {
+router.get("/getUploadUrl", identifyShop, async (req, res) => {
   try {
     const data = await presignedUrl();
     res.status(200).json(data);

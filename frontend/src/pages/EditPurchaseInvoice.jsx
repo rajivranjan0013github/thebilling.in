@@ -268,12 +268,14 @@ export default function EditPurchaseInvoice() {
       if (products.length === 0) {
         throw new Error("Please add at least one product");
       }
+      console.log(products);
 
       const formattedProducts = products.map((product) => ({
         inventoryId: product.inventoryId,
         productName: product.productName,
         batchNumber: product.batchNumber,
         batchId: product.batchId,
+        isBatchTracked: product.isBatchTracked,
         expiry: product.expiry,
         HSN: product.HSN || "",
         mrp: roundToTwo(Number(product.mrp)),
@@ -320,6 +322,7 @@ export default function EditPurchaseInvoice() {
         payments: updatedPayments,
         paymentStatus: amountPaid >= amountData.grandTotal ? 'paid' : 'due'
       };
+      console.log(purchaseData);
 
       const response = await fetch(`${Backend_URL}/api/purchase/edit`, {
         method: "POST",

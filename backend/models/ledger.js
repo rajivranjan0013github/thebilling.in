@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
+
 const LedgerSchema = new mongoose.Schema(
   {
     distributorId: { type: mongoose.Schema.Types.ObjectId, ref: "distributor" },
@@ -13,5 +14,6 @@ const LedgerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-LedgerSchema.plugin(pharmacyPlugin);
+LedgerSchema.plugin(shopPlugin);
+
 export const Ledger = mongoose.model("Ledger", LedgerSchema);

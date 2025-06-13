@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const accountDetailsSchema = new mongoose.Schema(
   {
@@ -74,6 +74,6 @@ const accountDetailsSchema = new mongoose.Schema(
   }
 );
 
-accountDetailsSchema.plugin(pharmacyPlugin);
+accountDetailsSchema.plugin(shopPlugin);
 const AccountDetails = mongoose.model("AccountDetails", accountDetailsSchema);
 export default AccountDetails;

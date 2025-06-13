@@ -50,7 +50,11 @@ export default function PurchaseTable({
   const [editBatchNumbers, setEditBatchNumbers] = useState({});
   // Add useEffect to recalculate current product amount when gstMode changes
   useEffect(() => {
-    if (newProduct?.quantity && newProduct?.purchaseRate && typeof calculateProductAmount === 'function') {
+    if (
+      newProduct?.quantity &&
+      newProduct?.purchaseRate &&
+      typeof calculateProductAmount === "function"
+    ) {
       // For newProduct, we pass it directly to the calculation function
       const amount = calculateProductAmount(newProduct, gstMode);
       setNewProduct((prev) => ({
@@ -75,12 +79,16 @@ export default function PurchaseTable({
 
     // Handle schemePercent display separately if scheme inputs change
     if (field === "schemeInput1" || field === "schemeInput2") {
-      if (updatedProductInterim.schemeInput1 && updatedProductInterim.schemeInput2) {
+      if (
+        updatedProductInterim.schemeInput1 &&
+        updatedProductInterim.schemeInput2
+      ) {
         const s1 = Number(updatedProductInterim.schemeInput1);
         const s2 = Number(updatedProductInterim.schemeInput2);
         if (s1 > 0 && s1 + s2 > 0) {
           const schemePercent = (s2 / (s1 + s2)) * 100;
-          updatedProductInterim.schemePercent = convertToFraction(schemePercent);
+          updatedProductInterim.schemePercent =
+            convertToFraction(schemePercent);
         } else {
           updatedProductInterim.schemePercent = "";
         }
@@ -90,7 +98,11 @@ export default function PurchaseTable({
     }
 
     // Recalculate amount using the prop function
-    if (updatedProductInterim?.quantity && updatedProductInterim?.purchaseRate && typeof calculateProductAmount === 'function') {
+    if (
+      updatedProductInterim?.quantity &&
+      updatedProductInterim?.purchaseRate &&
+      typeof calculateProductAmount === "function"
+    ) {
       const amount = calculateProductAmount(updatedProductInterim, gstMode);
       updatedProductInterim.amount = convertToFraction(amount);
     } else {
@@ -101,7 +113,7 @@ export default function PurchaseTable({
 
   // Internal keydown handler for the table's input row
   const handleTableKeyDown = (e, currentKey) => {
-    const fieldOrder = [
+    let fieldOrder = [
       "product",
       "batchNumber",
       "HSN",
@@ -111,8 +123,7 @@ export default function PurchaseTable({
       "free",
       "mrp",
       "purchaseRate",
-      "schemeInput1",
-      "schemeInput2",
+
       "discount",
       "gstPer",
       "addButton",
@@ -124,8 +135,10 @@ export default function PurchaseTable({
       if (e.shiftKey) {
         // Move backwards
         const currentIndex = fieldOrder.indexOf(currentKey);
+        console.log(currentIndex);
         if (currentIndex > 0) {
           const prevField = fieldOrder[currentIndex - 1];
+          console.log(prevField);
           if (inputRef.current[prevField]) {
             inputRef.current[prevField].focus();
           }
@@ -134,7 +147,10 @@ export default function PurchaseTable({
       }
 
       // Move forwards
+      console.log(currentKey);
+      console.log(fieldOrder);
       const currentIndex = fieldOrder.indexOf(currentKey);
+      console.log(currentIndex);
       if (currentIndex === -1) return;
 
       // If we're on the last field (addButton), trigger add
@@ -146,6 +162,7 @@ export default function PurchaseTable({
       // Find next empty field
       for (let i = currentIndex + 1; i < fieldOrder.length; i++) {
         const nextField = fieldOrder[i];
+        console.log(nextField);
 
         // Check if the field is empty
         const isEmpty =
@@ -165,7 +182,7 @@ export default function PurchaseTable({
       }
     }
   };
- 
+
   // handle add product to list
   const handleAdd = () => {
     if (!newProduct.productName || !newProduct.inventoryId) {
@@ -176,25 +193,57 @@ export default function PurchaseTable({
       toast({ variant: "destructive", title: "Please add quantity" });
       return;
     }
-    if(newProduct?.expiry){
-      const tempExpiry = newProduct?.expiry.split("/");
-      if(tempExpiry.length === 1){
-        toast({ variant: "destructive", title: "Please add expiry" });
+
+    const isBatchTracked = newProduct.isBatchTracked ?? true;
+
+    if (isBatchTracked) {
+      if (!newProduct.batchNumber && !batchNumber) {
+        toast({
+          variant: "destructive",
+          title: "Please provide a batch number.",
+        });
         return;
-      } else if(tempExpiry.length === 2){
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth();
-        const expiryYear = 2000 + Number(tempExpiry[1]);
-        const expiryMonth = Number(tempExpiry[0]);
-        if(expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)){
-          toast({ variant: "destructive", title: "You cannot add expired product" });
+      }
+
+      if (newProduct?.expiry) {
+        const tempExpiry = newProduct.expiry.split("/");
+        if (
+          tempExpiry.length !== 2 ||
+          !tempExpiry[0] ||
+          !tempExpiry[1] ||
+          tempExpiry[1].length !== 2
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Please add a valid expiry date in MM/YY format.",
+          });
           return;
+        } else {
+          const currentYear = new Date().getFullYear();
+          const currentMonth = new Date().getMonth() + 1; // 1-indexed
+          const expiryYear = 2000 + Number(tempExpiry[1]);
+          const expiryMonth = Number(tempExpiry[0]);
+
+          if (expiryMonth < 1 || expiryMonth > 12) {
+            toast({
+              variant: "destructive",
+              title: "Invalid month in expiry date.",
+            });
+            return;
+          }
+
+          if (
+            expiryYear < currentYear ||
+            (expiryYear === currentYear && expiryMonth < currentMonth)
+          ) {
+            toast({
+              variant: "destructive",
+              title: "You cannot add an expired product.",
+            });
+            return;
+          }
         }
       }
-    }
-    else{
-      toast({ variant: "destructive", title: "Please add expiry" });
-      return;
     }
 
     let tempData = { ...newProduct };
@@ -213,15 +262,56 @@ export default function PurchaseTable({
       mfcName: product.mfcName,
       productName: product.name,
       inventoryId: product._id,
+      mrp: product.mrp || "",
+      gstPer: product.gstPer || "",
+      purchaseRate: product.purchaseRate || "",
+      isBatchTracked: product.isBatchTracked,
       HSN: product.HSN || "", // Pre-fill HSN if available
       pack: product.pack || 1, // Pre-fill default pack
       location: product.location || "", // Pre-fill location if available
     }));
     setProductSearch(product.name);
+    // After the product is set, move focus to the first subsequent empty & enabled field
     setTimeout(() => {
-      if (inputRef && inputRef.current["batchNumber"]) {
-        inputRef.current["batchNumber"].focus();
+      if (!inputRef?.current) return;
+
+      // Order of fields as used in the input row
+      const fieldOrder = [
+        "product",
+        "batchNumber",
+        "HSN",
+        "expiry",
+        "pack",
+        "quantity",
+        "free",
+        "mrp",
+        "purchaseRate",
+
+        "discount",
+        "gstPer",
+        "addButton",
+      ];
+
+      // Start searching from the field right after "product"
+      const startIndex = fieldOrder.indexOf("product") + 1;
+
+      for (let i = startIndex; i < fieldOrder.length; i++) {
+        const key = fieldOrder[i];
+        const el = inputRef.current[key];
+
+        if (!el) continue; // if the element isn't rendered yet, skip
+
+        const isDisabled = el.disabled;
+        const hasValue = (el.value ?? "").toString().trim() !== "";
+
+        if (!isDisabled && !hasValue) {
+          el.focus();
+          return;
+        }
       }
+
+      // Fallback: focus the add button if available
+      inputRef.current["addButton"]?.focus();
     }, 100);
   };
 
@@ -240,6 +330,7 @@ export default function PurchaseTable({
   };
 
   const handleBatchSelect = (batch) => {
+    console.log(batch)
     if (!batch) return;
     setBatchNumber(batch.batchNumber);
     setNewProduct((prev) => ({
@@ -248,12 +339,14 @@ export default function PurchaseTable({
       batchNumber: batch.batchNumber,
       expiry: batch.expiry || "",
       mrp: batch.mrp || "",
-      pack: batch.pack || prev.pack, // Override pack if batch has specific pack
+      pack: batch.pack || prev.pack,
       purchaseRate: batch.purchaseRate || "",
       gstPer: batch.gstPer || "",
       HSN: batch.HSN || prev.HSN, // Keep existing HSN if batch doesn't have one
     }));
-    // Focus HSN field after batch selection
+    if (inputRef.current["HSN"]) {
+      inputRef.current["HSN"].focus();
+    }
   };
 
   useEffect(() => {
@@ -261,7 +354,7 @@ export default function PurchaseTable({
       const syntheticEvent = new KeyboardEvent("keydown", { key: "Enter" });
       handleTableKeyDown(syntheticEvent, "batchNumber");
     }
-  }, [ newProduct.batchNumber]);
+  }, [newProduct.batchNumber]);
   // edit all product togather
   const handleInputChangeEditMode = (index, field, value) => {
     setProducts((prevProducts) => {
@@ -277,26 +370,12 @@ export default function PurchaseTable({
         field === "gstPer"
       ) {
         // Recalculate amount using the prop function
-        if (typeof calculateProductAmount === 'function') {
-            const amount = calculateProductAmount(productToUpdate, gstMode);
-            productToUpdate.amount = convertToFraction(amount);
+        if (typeof calculateProductAmount === "function") {
+          const amount = calculateProductAmount(productToUpdate, gstMode);
+          productToUpdate.amount = convertToFraction(amount);
         }
 
         // Handle schemePercent display separately if scheme inputs change
-        if (field === "schemeInput1" || field === "schemeInput2") {
-            if (productToUpdate.schemeInput1 && productToUpdate.schemeInput2) {
-                const s1 = Number(productToUpdate.schemeInput1);
-                const s2 = Number(productToUpdate.schemeInput2);
-                if (s1 > 0 && s1 + s2 > 0) {
-                    const schemePercent = (s2 / (s1 + s2)) * 100;
-                    productToUpdate.schemePercent = convertToFraction(schemePercent);
-                } else {
-                    productToUpdate.schemePercent = "";
-                }
-            } else {
-                productToUpdate.schemePercent = "";
-            }
-        }
       }
 
       updatedProducts[index] = productToUpdate;
@@ -351,7 +430,7 @@ export default function PurchaseTable({
       };
 
       // Now, recalculate amount based on the updated product state using the prop function
-      if (typeof calculateProductAmount === 'function') {
+      if (typeof calculateProductAmount === "function") {
         const amount = calculateProductAmount(productToUpdate, gstMode);
         productToUpdate.amount = convertToFraction(amount);
       }
@@ -384,9 +463,9 @@ export default function PurchaseTable({
   };
 
   return (
-    <div className="w-full border-[1px] border-inherit py-4 rounded-sm">
+    <div className="w-full border-[1px] border-inherit py-4 rounded-none">
       {/* Header row */}
-      <div className="grid grid-cols-[30px_3fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_50px] gap-1 px-2">
+      <div className="grid grid-cols-[30px_4fr_150px_100px_70px_1fr_1fr_1fr_100px_100px_1fr_1fr_2fr_50px] gap-1 px-2">
         <div className="flex justify-center">#</div>
         <div>
           <p className="text-xs font-semibold">PRODUCT</p>
@@ -415,12 +494,7 @@ export default function PurchaseTable({
         <div>
           <p className="text-xs font-semibold">RATE(₹)</p>
         </div>
-        <div>
-          <p className="text-xs font-semibold">Scheme</p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold">SCH%</p>
-        </div>
+
         <div>
           <p className="text-xs font-semibold">DISC</p>
         </div>
@@ -443,7 +517,7 @@ export default function PurchaseTable({
 
       {/* Input row */}
       {!viewMode && (
-        <div className="grid grid-cols-[30px_3fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_50px] gap-1 px-2 mt-2 font-semibold">
+        <div className="grid grid-cols-[30px_4fr_150px_100px_70px_1fr_1fr_1fr_100px_100px_1fr_1fr_2fr_50px] gap-1 px-2 mt-2 font-semibold">
           <div></div>
           <div>
             <Input
@@ -453,18 +527,21 @@ export default function PurchaseTable({
               value={productSearch}
               type="text"
               placeholder="Type or Press Space"
-              className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-sm"
+              className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-none"
             />
           </div>
           <div>
             <BatchSuggestion
               inputRef={inputRef}
-              value={batchNumber}
+              value={newProduct?.isBatchTracked ? batchNumber : ""}
               setValue={setBatchNumber}
               onSuggestionSelect={handleBatchSelect}
               inventoryId={newProduct?.inventoryId}
+              batchTracking={newProduct?.isBatchTracked}
               ref={(el) => (inputRef.current["batchNumber"] = el)}
+              disabled={newProduct?.isBatchTracked === false}
               onKeyDown={(e) => handleTableKeyDown(e, "batchNumber")}
+              fromWhere="purchase"
             />
           </div>
           <div>
@@ -475,7 +552,7 @@ export default function PurchaseTable({
               onChange={(e) => handleInputChange("HSN", e.target.value)}
               value={newProduct.HSN || ""}
               type="text"
-              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
             />
           </div>
           <div>
@@ -489,7 +566,7 @@ export default function PurchaseTable({
               value={newProduct.expiry || ""}
               type="text"
               placeholder="MM/YY"
-              className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-sm"
+              className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-none"
             />
           </div>
           <div>
@@ -503,7 +580,7 @@ export default function PurchaseTable({
                 onChange={(e) => handleInputChange("pack", e.target.value)}
                 value={newProduct.pack || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 pl-7 rounded-sm"
+                className="h-8 w-full border-[1px] border-gray-300 px-1 pl-7 rounded-none"
               />
             </div>
           </div>
@@ -514,7 +591,7 @@ export default function PurchaseTable({
               onChange={(e) => handleInputChange("quantity", e.target.value)}
               value={newProduct.quantity || ""}
               type="text"
-              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
             />
           </div>
           <div>
@@ -524,7 +601,7 @@ export default function PurchaseTable({
               onChange={(e) => handleInputChange("free", e.target.value)}
               value={newProduct.free || ""}
               type="text"
-              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
             />
           </div>
           <div>
@@ -535,7 +612,7 @@ export default function PurchaseTable({
                 onChange={(e) => handleInputChange("mrp", e.target.value)}
                 value={newProduct.mrp || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+                className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
               />
             </div>
           </div>
@@ -549,48 +626,11 @@ export default function PurchaseTable({
                 }
                 value={newProduct.purchaseRate || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+                className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
               />
             </div>
           </div>
-          <div>
-            <div className="flex gap-1">
-              <Input
-                ref={(el) => (inputRef.current["schemeInput1"] = el)}
-                onKeyDown={(e) => handleTableKeyDown(e, "schemeInput1")}
-                value={newProduct.schemeInput1 || ""}
-                onChange={(e) =>
-                  handleInputChange("schemeInput1", e.target.value)
-                }
-                type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
-              />
-              +
-              <Input
-                ref={(el) => (inputRef.current["schemeInput2"] = el)}
-                onKeyDown={(e) => handleTableKeyDown(e, "schemeInput2")}
-                value={newProduct.schemeInput2 || ""}
-                onChange={(e) =>
-                  handleInputChange("schemeInput2", e.target.value)
-                }
-                type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
-              />
-            </div>
-          </div>
-          <div>
-            <div className="relative">
-              <Input
-                disabled
-                value={newProduct.schemePercent || ""}
-                type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-sm"
-              />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2">
-                %
-              </span>
-            </div>
-          </div>
+
           <div>
             <div className="relative">
               <Input
@@ -599,7 +639,7 @@ export default function PurchaseTable({
                 onChange={(e) => handleInputChange("discount", e.target.value)}
                 value={newProduct.discount || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-sm"
+                className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-none"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2">
                 %
@@ -614,7 +654,7 @@ export default function PurchaseTable({
                 onChange={(e) => handleInputChange("gstPer", e.target.value)}
                 value={newProduct.gstPer || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-sm"
+                className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-none"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2">
                 %
@@ -626,7 +666,7 @@ export default function PurchaseTable({
               readOnly
               value={newProduct.amount || ""}
               type="text"
-              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+              className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
               disabled
             />
           </div>
@@ -634,7 +674,7 @@ export default function PurchaseTable({
             <button
               onClick={handleAdd}
               ref={(el) => (inputRef.current["addButton"] = el)}
-              className="bg-primary p-1 rounded-sm"
+              className="bg-primary p-1 rounded-none"
               title="Add Item"
               onKeyDown={(e) => handleTableKeyDown(e, "addButton")}
             >
@@ -652,7 +692,7 @@ export default function PurchaseTable({
         {products.length !== 0 &&
           products.map((product, index) => (
             <div
-              className="grid grid-cols-[30px_3fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_50px] gap-1 px-2 mt-1 font-semibold"
+              className="grid grid-cols-[30px_4fr_150px_100px_70px_1fr_1fr_1fr_100px_100px_1fr_1fr_2fr_50px] gap-1 px-2 mt-1 font-semibold"
               key={product?.inventoryId}
             >
               <div className="flex justify-center items-center font-semibold">
@@ -663,13 +703,13 @@ export default function PurchaseTable({
                   disabled
                   value={product?.productName}
                   type="text"
-                  className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-sm"
+                  className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-none"
                 />
               </div>
               <div>
                 <BatchSuggestion
                   inputRef={inputRef}
-                  value={editBatchNumbers[index] || product?.batchNumber || ""}
+                  value={editBatchNumbers[index] || product?.isBatchTracked ? product?.batchNumber : ""}
                   setValue={(value) => {
                     setEditBatchNumbers((prev) => ({
                       ...prev,
@@ -686,25 +726,31 @@ export default function PurchaseTable({
               </div>
               <div>
                 <Input
-                  disabled={!editAll && editingIndex !== index}
+                  disabled={
+                    (!editAll && editingIndex !== index)
+                  
+                  }
                   onChange={(e) =>
                     handleInputChangeEditMode(index, "HSN", e.target.value)
                   }
                   value={product?.HSN || ""}
                   type="text"
-                  className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+                  className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
                 />
               </div>
               <div>
                 <Input
-                  disabled={!editAll && editingIndex !== index}
+                  disabled={
+                    (!editAll && editingIndex !== index)
+                   
+                  }
                   onChange={(e) => {
                     const formattedValue = formatExpiryInput(e.target.value);
                     handleInputChangeEditMode(index, "expiry", formattedValue);
                   }}
                   value={product?.expiry || ""}
                   type="text"
-                  className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-sm"
+                  className="h-8 w-full border-[1px] border-gray-300 px-2 rounded-none"
                 />
               </div>
               <div>
@@ -713,60 +759,65 @@ export default function PurchaseTable({
                     1x
                   </span>
                   <Input
-                    disabled={!editAll && editingIndex !== index}
+                    disabled={
+                      (!editAll && editingIndex !== index)
+                    }
                     onChange={(e) =>
                       handleInputChangeEditMode(index, "pack", e.target.value)
                     }
                     value={product?.pack || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 px-1 pl-7 rounded-sm"
+                    className="h-8 w-full border-[1px] border-gray-300 px-1 pl-7 rounded-none"
                   />
                 </div>
               </div>
               <div>
                 <Input
-                  disabled={!editAll && editingIndex !== index}
+                  disabled={
+                    (!editAll && editingIndex !== index)
+                  }
                   onChange={(e) =>
                     handleInputChangeEditMode(index, "quantity", e.target.value)
                   }
                   value={product?.quantity || ""}
                   type="text"
-                  className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+                  className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
                 />
               </div>
               <div>
                 <Input
-                  disabled={!editAll && editingIndex !== index}
+                  disabled={
+                    (!editAll && editingIndex !== index)
+                  }
                   onChange={(e) =>
                     handleInputChangeEditMode(index, "free", e.target.value)
                   }
                   value={product?.free || ""}
                   type="text"
-                  className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
+                  className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-none"
                 />
               </div>
               <div>
                 <div className="relative">
                   <Input
-                    disabled={!editAll && editingIndex !== index}
+                    disabled={
+                      (!editAll && editingIndex !== index) 
+                    }
                     onChange={(e) =>
-                      handleInputChangeEditMode(
-                        index,
-                        "mrp",
-                        e.target.value
-                      )
+                      handleInputChangeEditMode(index, "mrp", e.target.value)
                     }
                     value={Number(product?.mrp || 0)?.toFixed(2) || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300  rounded-sm text-right"
+                    className="h-8 w-full border-[1px] border-gray-300  rounded-none text-right"
                   />
                 </div>
               </div>
               <div>
                 <div className="relative">
-                  
                   <Input
-                    disabled={!editAll && editingIndex !== index}
+                    disabled={
+                      (!editAll && editingIndex !== index)
+                    }
                     onChange={(e) =>
                       handleInputChangeEditMode(
                         index,
@@ -776,58 +827,17 @@ export default function PurchaseTable({
                     }
                     value={Number(product?.purchaseRate || 0)?.toFixed(2) || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300  rounded-sm text-right"
+                    className="h-8 w-full border-[1px] border-gray-300  rounded-none text-right"
                   />
                 </div>
               </div>
-              <div>
-                <div className="flex gap-1">
-                  <Input
-                    disabled={!editAll && editingIndex !== index}
-                    value={product?.schemeInput1 || ""}
-                    onChange={(e) =>
-                      handleInputChangeEditMode(
-                        index,
-                        "schemeInput1",
-                        e.target.value
-                      )
-                    }
-                    type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
-                  />
-                  +
-                  <Input
-                    disabled={!editAll && editingIndex !== index}
-                    value={product?.schemeInput2 || ""}
-                    onChange={(e) =>
-                      handleInputChangeEditMode(
-                        index,
-                        "schemeInput2",
-                        e.target.value
-                      )
-                    }
-                    type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 px-1 rounded-sm"
-                  />
-                </div>
-              </div>
+
               <div>
                 <div className="relative">
                   <Input
-                    disabled
-                    value={product?.schemePercent || ""}
-                    type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-sm"
-                  />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2">
-                    %
-                  </span>
-                </div>
-              </div>
-              <div>
-                <div className="relative">
-                  <Input
-                    disabled={!editAll && editingIndex !== index}
+                    disabled={
+                      (!editAll && editingIndex !== index) 
+                    }
                     onChange={(e) =>
                       handleInputChangeEditMode(
                         index,
@@ -837,7 +847,7 @@ export default function PurchaseTable({
                     }
                     value={product?.discount || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-sm"
+                    className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-none"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2">
                     %
@@ -847,13 +857,16 @@ export default function PurchaseTable({
               <div>
                 <div className="relative">
                   <Input
-                    disabled={!editAll && editingIndex !== index}
+                    disabled={
+                      (!editAll && editingIndex !== index)
+                     
+                    }
                     onChange={(e) =>
                       handleInputChangeEditMode(index, "gstPer", e.target.value)
                     }
                     value={product?.gstPer || ""}
                     type="text"
-                    className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-sm"
+                    className="h-8 w-full border-[1px] border-gray-300 px-1 pr-5 rounded-none"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2">
                     %
@@ -862,10 +875,13 @@ export default function PurchaseTable({
               </div>
               <div>
                 <Input
-                  disabled
+                  disabled={
+                    (!editAll && editingIndex !== index)
+                  
+                  }
                   value={Number(product?.amount || 0)?.toFixed(2) || ""}
                   type="text"
-                  className="h-8 w-full border-[1px] border-gray-300 px-1 text-right rounded-sm"
+                  className="h-8 w-full border-[1px] border-gray-300 px-1 text-right rounded-none"
                 />
               </div>
               <div className="flex gap-2 items-center justify-center">

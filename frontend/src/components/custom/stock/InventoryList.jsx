@@ -10,7 +10,7 @@ import {
   EllipsisVertical,
   Upload,
   Download,
-  ArrowLeft
+  ArrowLeft,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,37 +21,51 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { fetchItems } from "../../../redux/slices/inventorySlice";
 import { exportInventory } from "../../../redux/slices/exportImportSlice";
-import ManageInventory from "../inventory/ManageInventory";
+import AddNewInventory from "../inventory/AddNewInventory";
 import ExportDataDlg from "../mirgration/ExportDataDlg";
 import ImportDataDlg from "../mirgration/ImportDataDlg";
-import { convertQuantity } from "../../../assets/Data";
+// import { convertQuantity } from "../../../assets/Data";
 import { useNavigate } from "react-router-dom";
 import { importInventory } from "../../../redux/slices/exportImportSlice";
+export const convertQuantity = (qty, pack = 1, primaryUnit, secondaryUnit) => {
+  if (!qty) return "-";
+  const packs = Math.floor(Number(qty) / Number(pack));
+  const loose = qty % Number(pack);
+  if (loose) {
+    return `${packs} ${primaryUnit}, ${loose} ${secondaryUnit}`;
+  }
+  return `${packs} ${primaryUnit}`;
+};
 
 // Export configuration
 const exportColumns = [
-  { header: 'Name', field: 'name', width: 30, required: true },
-  { header: 'Pack', field: 'pack', width: 15},
-  { header: 'Unit', field: 'unit', width: 15},
-  { header: 'Code', field: 'code', width: 15},
-  { header: 'Category', field: 'category', width: 20 },
-  { header: 'Manufacturer', field: 'mfcName', width: 25 },
-  { header: 'Composition', field: 'composition', width: 30 },
-  { header: 'Location', field: 'location', width: 20 },
-  { header: 'Batch Number', field: 'batchNumber', width: 20 },
-  { header: 'HSN', field: 'HSN', width: 15 },
-  { header: 'Quantity', field: 'quantity', width: 15 },
-  { header: 'Expiry', field: 'expiry', width: 15 },
-  { header: 'MRP', field: 'mrp', width: 15, format: 'currency' },
-  { header: 'GST', field: 'gstPer', width: 15 },
-  { header: 'Purchase Rate', field: 'purchaseRate', width: 20, format: 'currency' },
-  { header: 'Sale Rate', field: 'saleRate', width: 20, format: 'currency' },
+  { header: "Name", field: "name", width: 30, required: true },
+  { header: "Pack", field: "pack", width: 15 },
+  { header: "Unit", field: "unit", width: 15 },
+  { header: "Code", field: "code", width: 15 },
+  { header: "Category", field: "category", width: 20 },
+  { header: "Manufacturer", field: "mfcName", width: 25 },
+  { header: "Composition", field: "composition", width: 30 },
+  { header: "Location", field: "location", width: 20 },
+  { header: "Batch Number", field: "batchNumber", width: 20 },
+  { header: "HSN", field: "HSN", width: 15 },
+  { header: "Quantity", field: "quantity", width: 15 },
+  { header: "Expiry", field: "expiry", width: 15 },
+  { header: "MRP", field: "mrp", width: 15, format: "currency" },
+  { header: "GST", field: "gstPer", width: 15 },
+  {
+    header: "Purchase Rate",
+    field: "purchaseRate",
+    width: 20,
+    format: "currency",
+  },
+  { header: "Sale Rate", field: "saleRate", width: 20, format: "currency" },
 ];
 
 const exportFormatters = {
-  'MRP': (value) => `₹${value}`,
-  'Purchase Rate': (value) => `₹${value}`,
-  'Sale Rate': (value) => `₹${value}`,
+  MRP: (value) => `₹${value}`,
+  "Purchase Rate": (value) => `₹${value}`,
+  "Sale Rate": (value) => `₹${value}`,
 };
 
 const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
@@ -60,16 +74,16 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items} = useSelector((state) => state.inventory);
-  const [isManageInventoryOpen, setIsManageInventoryOpen] = useState(false);
+  const { items } = useSelector((state) => state.inventory);
+  const [isAddNewInventoryOpen, setIsAddNewInventoryOpen] = useState(false);
   const { importStatus } = useSelector((state) => state.exportImport);
 
   useEffect(() => {
-      dispatch(fetchItems());
+    dispatch(fetchItems());
   }, [dispatch]);
 
   useEffect(() => {
-    if(importStatus === "succeeded") {
+    if (importStatus === "succeeded") {
       dispatch(fetchItems());
     }
   }, [importStatus, dispatch]);
@@ -85,27 +99,32 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
   }, [items, setHasItems]);
 
   // Filter items based on search query
-  const filteredItems = items.filter((item) => {
-    const searchTerm = searchQuery.toLowerCase();
-    return (
-      item?.name?.toLowerCase().includes(searchTerm) ||
-      item?.mfcName?.toLowerCase().includes(searchTerm) ||
-      item?.expiry?.toLowerCase().includes(searchTerm) ||
-      item?.mrp?.toString().includes(searchTerm) ||
-      item?.pack?.toString().includes(searchTerm)
-    );
-  }).sort((a, b) => {
-    // If both items have quantity <= 0 or both have quantity > 0, maintain original order
-    if ((a.quantity <= 0 && b.quantity <= 0) || (a.quantity > 0 && b.quantity > 0)) {
-      return 0;
-    }
-    // If a has quantity <= 0, move it to the end
-    if (a.quantity <= 0) {
-      return 1;
-    }
-    // If b has quantity <= 0, move it to the end
-    return -1;
-  });
+  const filteredItems = items
+    .filter((item) => {
+      const searchTerm = searchQuery.toLowerCase();
+      return (
+        item?.name?.toLowerCase().includes(searchTerm) ||
+        item?.mfcName?.toLowerCase().includes(searchTerm) ||
+        item?.expiry?.toLowerCase().includes(searchTerm) ||
+        item?.mrp?.toString().includes(searchTerm) ||
+        item?.pack?.toString().includes(searchTerm)
+      );
+    })
+    .sort((a, b) => {
+      // If both items have quantity <= 0 or both have quantity > 0, maintain original order
+      if (
+        (a.quantity <= 0 && b.quantity <= 0) ||
+        (a.quantity > 0 && b.quantity > 0)
+      ) {
+        return 0;
+      }
+      // If a has quantity <= 0, move it to the end
+      if (a.quantity <= 0) {
+        return 1;
+      }
+      // If b has quantity <= 0, move it to the end
+      return -1;
+    });
 
   // Custom validation for inventory import
   const customValidation = (data) => {
@@ -121,10 +140,10 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
     <div className="flex flex-col h-full p-2">
       {/* Search Bar */}
       <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-medium">Inventory</h1>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-medium">Inventory</h1>
       </div>
       <div className="mb-4 flex flex-row gap-4 items-center">
         <div className="relative w-[95%]">
@@ -143,7 +162,7 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setIsManageInventoryOpen(true)}>
+            <DropdownMenuItem onClick={() => setIsAddNewInventoryOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create
             </DropdownMenuItem>
@@ -171,7 +190,9 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
               <Card
                 key={item?._id}
                 className={`p-3 cursor-pointer hover:bg-blue-50 transition-colors rounded-none ${
-                  selectedItemId === item?._id ? "bg-accent hover:bg-accent" : ""
+                  selectedItemId === item?._id
+                    ? "bg-accent hover:bg-accent"
+                    : ""
                 }`}
                 onClick={() => onItemSelect(item?._id)}
               >
@@ -182,26 +203,33 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1 mb-0.5">
-                      <span className="font-medium truncate capitalize">{item?.name}</span>
+                      <span className="font-medium truncate capitalize">
+                        {item?.name}
+                      </span>
                     </div>
                     <p className="text-xs text-muted-foreground truncate font-semibold">
                       {item?.mfcName}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      
                       <p className="text-xs truncate">Pack of {item?.pack}</p>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0 justify-center">
                     <Badge
-                        variant={item?.quantity > 0 ? "success" : "destructive"}
-                        
-                      >
-                        {item?.quantity > 0 ? "In Stock" : "Out of Stock"}
-                      </Badge>
-                      <p className="text-sm font-medium">
-                      {item?.quantity ? convertQuantity(item.quantity, item.pack) : ""}
+                      variant={item?.quantity > 0 ? "success" : "destructive"}
+                    >
+                      {item?.quantity > 0 ? "In Stock" : "Out of Stock"}
+                    </Badge>
+                    <p className="text-sm font-medium">
+                      {item?.quantity
+                        ? convertQuantity(
+                            item.quantity,
+                            item.pack,
+                            item.primaryUnit,
+                            item.secondaryUnit
+                          )
+                        : ""}
                     </p>
                   </div>
                 </div>
@@ -211,15 +239,14 @@ const InventoryList = ({ onItemSelect, selectedItemId, setHasItems }) => {
         </div>
       </ScrollArea>
 
-      <ManageInventory
-        open={isManageInventoryOpen}
-        onOpenChange={setIsManageInventoryOpen}
+      <AddNewInventory
+        open={isAddNewInventoryOpen}
+        onOpenChange={setIsAddNewInventoryOpen}
         inventoryDetails={null}
-        setItemDetails={() => {
+        onProductCreated={() => {
           dispatch(fetchItems());
         }}
-        batchDetails={null}
-        setUpdateBatchDetails={null}
+        initialProductName={searchQuery}
       />
 
       <ExportDataDlg

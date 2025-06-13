@@ -8,24 +8,148 @@ import { findChangesInObject } from "../utils/Helper.js";
 
 const router = express.Router();
 
-// Create or update inventory
-router.post("/manage-inventory", async (req, res) => {
-  const { _id, ...details } = req.body;
+// Create new inventory
+router.post("/", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    if (_id) {
-      // Update existing inventory
-      const updatedItem = await Inventory.findByIdAndUpdate(_id, details, {
-        new: true,
-      });
-      res.status(200).json(updatedItem);
-    } else {
-      // Create new inventory
-      const newInventoryItem = new Inventory(details);
-      const savedItem = await newInventoryItem.save();
-      res.status(201).json(savedItem);
+    const details = req.body;
+    const newInventoryItem = new Inventory(details);
+    const savedItem = await newInventoryItem.save({ session });
+
+    if (details.isBatchTracked && details.batchDetails) {
+      const batchData = {
+        ...details.batchDetails,
+        batchTracking: true,
+        inventoryId: savedItem._id,
+      };
+
+      const newBatch = new InventoryBatch(batchData);
+      await newBatch.save({ session });
+      savedItem.batch.push(newBatch._id);
+      savedItem.quantity = batchData.quantity || 0;
+      await savedItem.save({ session });
+    } else if (!details.isBatchTracked) {
+      const batchData = {
+        ...details,
+        inventoryId: savedItem._id,
+        batchTracking: false,
+        batchNumber: savedItem.name || "N/A",
+      };
+      const newBatch = new InventoryBatch(batchData);
+      await newBatch.save({ session });
+      savedItem.batch.push(newBatch._id);
+      savedItem.quantity = batchData.quantity || 0;
+      await savedItem.save({ session });
     }
+
+    const finalItem = await Inventory.findById(savedItem._id)
+      .populate("batch")
+      .session(session);
+    await session.commitTransaction();
+    res.status(201).json(finalItem);
   } catch (error) {
+    console.log(error);
+    await session.abortTransaction();
     res.status(500).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+// Update existing inventory
+router.put("/:id", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { id } = req.params;
+    const details = req.body;
+
+    // Fetch the current inventory item with batches
+    const existingItem = await Inventory.findById(id)
+      .populate("batch")
+      .session(session);
+    if (!existingItem) {
+      throw new Error("Item not found");
+    }
+
+    // Detect if batch tracking is being enabled for the very first time
+    const isEnablingBatchTracking =
+      existingItem.isBatchTracked === false && details.isBatchTracked === true;
+
+    // Separate any batchDetails (and _id) from other update fields
+    const { batchDetails, _id: bodyId, ...inventoryUpdateFields } = details;
+
+    // Apply simple field updates on inventory
+    Object.assign(existingItem, inventoryUpdateFields);
+
+    // ------------------------------------------------------------------
+    // If user has just enabled batch-tracking, convert the default batch
+    // (batchTracking : false) → tracked batch (batchTracking : true)
+    // ------------------------------------------------------------------
+    if (isEnablingBatchTracking) {
+      // 1. Locate and delete the un-tracked (default) batch
+      const defaultBatch = await InventoryBatch.findOne({
+        inventoryId: existingItem._id,
+        batchTracking: false,
+      }).session(session);
+
+      let carriedQuantity = existingItem.quantity || 0; // fallback
+      if (defaultBatch) {
+        carriedQuantity = Number(defaultBatch.quantity) || 0;
+        // Remove batch document
+        await InventoryBatch.deleteOne({ _id: defaultBatch._id }).session(
+          session
+        );
+        // Remove its reference from inventory.batch array
+        existingItem.batch = existingItem.batch.filter((b) => {
+          const idToCompare = (b && b._id ? b._id : b).toString();
+          return idToCompare !== defaultBatch._id.toString();
+        });
+      }
+
+      // 2. Prepare data for the new tracked batch. Use provided batchDetails
+      //    when available, otherwise fall back to inventory fields.
+      const newBatchData = {
+        batchTracking: true,
+        inventoryId: existingItem._id,
+        quantity: carriedQuantity,
+        batchNumber: batchDetails?.batchNumber,
+        expiry: batchDetails?.expiry ,
+        purchaseRate: batchDetails?.purchaseRate || existingItem.purchaseRate,
+        saleRate: batchDetails?.saleRate || existingItem.saleRate,
+        mrp: batchDetails?.mrp || existingItem.mrp,
+        gstPer: batchDetails?.gstPer || existingItem.gstPer,
+        location: batchDetails?.location || existingItem.location,
+        HSN: batchDetails?.HSN || existingItem.HSN,
+        primaryUnit: existingItem.primaryUnit,
+        secondaryUnit: existingItem.secondaryUnit,
+        pack: existingItem.pack,
+      };
+
+      const newBatch = new InventoryBatch(newBatchData);
+      await newBatch.save({ session });
+
+      // 3. Link the newly created batch & sync stock quantity
+      existingItem.batch.push(newBatch._id);
+      existingItem.quantity = carriedQuantity;
+    }
+
+    // Save inventory after modifications
+    const savedInventory = await existingItem.save({ session });
+
+    const populatedItem = await Inventory.findById(savedInventory._id)
+      .populate("batch")
+      .session(session);
+
+    await session.commitTransaction();
+    res.status(200).json(populatedItem);
+  } catch (error) {
+    console.log(error);
+    await session.abortTransaction();
+    res.status(500).json({ error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 

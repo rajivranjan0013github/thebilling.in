@@ -338,12 +338,7 @@ export default function DistributorDetails() {
                       <div className="text-sm text-muted-foreground">GSTIN</div>
                       <div>{distributorDetails.gstin || "-"}</div>
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">
-                        Drug License Number
-                      </div>
-                      <div>{distributorDetails.DLNumber || "-"}</div>
-                    </div>
+                  
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const SalesBillCounterSchema = new mongoose.Schema({
   year: {
@@ -9,9 +9,10 @@ const SalesBillCounterSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  sequence_value: { type: Number, default: 0 },
 });
 
-SalesBillCounterSchema.plugin(pharmacyPlugin);
+SalesBillCounterSchema.plugin(shopPlugin);
 const SalesBillCounter = mongoose.model(
   "SalesBillCounter",
   SalesBillCounterSchema
@@ -76,6 +77,9 @@ const salesBillSchema = new mongoose.Schema(
         purchaseRate: Number,
         saleRate: Number,
         discount: Number,
+        isBatchTracked: {
+          type: Boolean,
+        },
         gstPer: Number,
         mfcName: String,
         amount: Number,
@@ -186,7 +190,7 @@ salesBillSchema.statics.getCurrentInvoiceNumber = async function (session) {
   );
   return `INV/${yearSuffix}/${counter.invoice_number + 1}`;
 };
-// Apply pharmacy plugin
-salesBillSchema.plugin(pharmacyPlugin);
+// Apply shop plugin
+salesBillSchema.plugin(shopPlugin);
 
 export const SalesBill = mongoose.model("SalesBill", salesBillSchema);

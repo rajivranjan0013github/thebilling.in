@@ -5,7 +5,7 @@ import {
   updateDistributor,
 } from "../../../redux/slices/distributorSlice";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+import MemoizedInput from "../custom-fields/MemoizedInput";
 import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
 import {
@@ -60,7 +60,6 @@ export default function CreateDistributorDlg({
     "mob",
     "email",
     "gstin",
-    "DLNumber",
     "accountNumber",
     "ifsc",
     "address",
@@ -219,39 +218,30 @@ export default function CreateDistributorDlg({
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <Label htmlFor="name" className="text-xs font-medium">
-                    Distributor Name<span className="text-red-500">*</span>
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="name"
                     name="name"
+                    label="Distributor Name"
                     value={formData.name}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "name")}
                     ref={(el) => (inputRef.current["name"] = el)}
-                    placeholder="Enter Distributor name"
                     required
-                    className="h-8 mt-1.5 text-sm font-semibold p-2 border rounded-md"
                   />
                 </div>
                 <div className="w-[180px]">
-                  <Label htmlFor="openBalance" className="text-xs font-medium">
-                    Balance
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="openBalance"
                     name="openBalance"
                     type="number"
+                    label="Balance"
                     value={formData.openBalance}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "openBalance")}
                     ref={(el) => (inputRef.current["openBalance"] = el)}
-                    placeholder="₹ 0"
-                    className="h-8 mt-1.5 text-sm font-semibold p-2 border rounded-md"
                   />
                 </div>
                 <div className="w-[160px]">
-                  <Label className="text-xs font-medium ">Type</Label>
                   <Select
                     value={formData.balance_type}
                     onValueChange={(value) =>
@@ -263,7 +253,7 @@ export default function CreateDistributorDlg({
                       ref={(el) => (inputRef.current["balance_type"] = el)}
                       onKeyDown={(e) => handleKeyDown(e, "balance_type")}
                     >
-                      <SelectValue placeholder="Select" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="collect">To Collect</SelectItem>
@@ -275,34 +265,26 @@ export default function CreateDistributorDlg({
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="mob" className="text-xs font-medium ">
-                    Mobile Number
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="mob"
                     name="mob"
+                    label="Mobile Number"
                     value={formData.mob}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "mob")}
                     ref={(el) => (inputRef.current["mob"] = el)}
-                    placeholder="Enter mobile"
-                    className="h-8 mt-1.5 text-sm font-semibold p-2 border rounded-md"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email" className="text-xs font-medium ">
-                    Email
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="email"
                     name="email"
                     type="email"
+                    label="Email"
                     value={formData.email}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "email")}
                     ref={(el) => (inputRef.current["email"] = el)}
-                    placeholder="Enter email"
-                    className="h-8 mt-1.5 text-sm font-semibold p-2 border rounded-md"
                   />
                 </div>
               </div>
@@ -311,69 +293,40 @@ export default function CreateDistributorDlg({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="gstin" className="text-xs font-medium ">
-                    GSTIN
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="gstin"
                     name="gstin"
+                    label="GSTIN"
                     value={formData.gstin}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "gstin")}
                     ref={(el) => (inputRef.current["gstin"] = el)}
-                    placeholder="ex: 29XXXXX9438X1XX"
-                    className="h-8 mt-1 text-sm font-semibold p-2 border rounded-md"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="DLNumber" className="text-xs font-medium ">
-                    Drug License Number
-                  </Label>
-                  <Input
-                    id="DLNumber"
-                    name="DLNumber"
-                    value={formData.DLNumber}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, "DLNumber")}
-                    ref={(el) => (inputRef.current["DLNumber"] = el)}
-                    placeholder="Enter DL Number"
-                    className="h-8 mt-1 text-sm font-semibold p-2 border rounded-md"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label
-                    htmlFor="accountNumber"
-                    className="text-xs font-medium"
-                  >
-                    Bank Account Number
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="accountNumber"
                     name="accountNumber"
+                    label="Bank Account Number"
                     value={formData.bankDetails.accountNumber}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "accountNumber")}
                     ref={(el) => (inputRef.current["accountNumber"] = el)}
-                    placeholder="Enter account number"
-                    className="h-8 mt-1 text-sm font-semibold p-2 border rounded-md"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ifsc" className="text-xs font-medium">
-                    IFSC Code
-                  </Label>
-                  <Input
+                  <MemoizedInput
                     id="ifsc"
                     name="ifsc"
+                    label="IFSC Code"
                     value={formData.bankDetails.ifsc}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, "ifsc")}
                     ref={(el) => (inputRef.current["ifsc"] = el)}
-                    placeholder="Enter IFSC code"
-                    className="h-8 mt-1 text-sm font-semibold p-2 border rounded-md uppercase"
+                    style={{ textTransform: "uppercase" }}
                   />
                 </div>
               </div>
@@ -386,7 +339,6 @@ export default function CreateDistributorDlg({
                   id="address"
                   name="address"
                   className="w-full h-[60px] p-2 mt-1 rounded-md border border-input text-sm font-semibold resize-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter complete address"
                   value={formData.address}
                   onChange={handleInputChange}
                   onKeyDown={(e) => handleKeyDown(e, "address")}

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { Input } from "../../ui/input";
 import { Badge } from "../../ui/badge"; // Add this import
-import { formatCurrency } from "../../../utils/Helper";
+import { ChevronsUpDown } from "lucide-react";
+import { useFloating, offset, flip, shift } from "@floating-ui/react";
+
+import { ScrollArea } from "../../ui/scroll-area";
 
 export const SearchSuggestion = forwardRef(
   (
@@ -11,9 +14,9 @@ export const SearchSuggestion = forwardRef(
       value,
       setValue,
       onSuggestionSelect,
-      showAmount = false,
-      onKeyDown,
-      disabled = false,
+      showStock = false,
+      onKeyDown: externalKeyDown,
+      ...restProps
     },
     ref
   ) => {
@@ -21,27 +24,19 @@ export const SearchSuggestion = forwardRef(
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const suggestionListRef = useRef(null);
-    const suggestionContainerRef = useRef(null); // Ref for the suggestions' container
-    const inputRefInternal = useRef(null); // Internal ref for the input
-
-    // Combine the external ref with the internal ref
-    useEffect(() => {
-      if (ref) {
-        if (typeof ref === "function") {
-          ref(inputRefInternal.current);
-        } else {
-          ref.current = inputRefInternal.current;
-        }
-      }
-    }, [ref]);
-
     useEffect(() => {
       const filtered = suggestions.filter((suggestion) =>
-        suggestion.name.toLowerCase().includes((value || "").toLowerCase())
+        suggestion?.name?.toLowerCase()?.includes((value || "")?.toLowerCase())
       );
-      setFilteredSuggestions(filtered);
+      // Sort filtered suggestions to show templates first
+      const sortedFiltered = [...filtered].sort((a, b) => {
+        if (a.isTemplate && !b.isTemplate) return -1;
+        if (!a.isTemplate && b.isTemplate) return 1;
+        return 0;
+      });
+      setFilteredSuggestions(sortedFiltered);
       setSelectedIndex(-1);
-    }, [value]);
+    }, [value, suggestions]);
 
     const handleInputChange = (e) => {
       setValue(e.target.value);
@@ -54,12 +49,13 @@ export const SearchSuggestion = forwardRef(
       if (onSuggestionSelect) {
         onSuggestionSelect(suggestion);
       }
-      if (inputRefInternal.current) {
-        inputRefInternal.current.focus();
+      if (ref && ref.current) {
+        ref.current.focus();
       }
     };
 
     const handleKeyDown = (e) => {
+      // Handle internal navigation within suggestion list first
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) =>
@@ -70,29 +66,38 @@ export const SearchSuggestion = forwardRef(
         setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
       } else if (e.key === "Enter") {
         if (selectedIndex >= 0) {
+          // Select the highlighted suggestion
           e.preventDefault();
           setValue(filteredSuggestions[selectedIndex].name);
           setShowSuggestions(false);
           if (onSuggestionSelect) {
             onSuggestionSelect(filteredSuggestions[selectedIndex]);
           }
-          if (inputRefInternal.current) {
-            // Focus back to input after selection
-            inputRefInternal.current.focus();
-          }
-        } else {
-          // If no suggestion is selected, handle the navigation
-          if (onKeyDown) {
-            onKeyDown(e);
-          }
+          return; // do not propagate to external handler when selecting suggestion
         }
-      } else if (e.key === "Escape") {
-        // Handle Escape key
-        e.preventDefault();
-        setShowSuggestions(false);
+        // No suggestion selected; delegate to external handler for form navigation
+        if (externalKeyDown) {
+          externalKeyDown(e);
+        }
+        return;
+      }
+
+      // For other keys, simply forward to external handler as well (if provided)
+      if (externalKeyDown) {
+        externalKeyDown(e);
       }
     };
-
+    const { refs, floatingStyles } = useFloating({
+      placement: "bottom-start",
+      middleware: [
+        offset(4),
+        flip({
+          fallbackPlacements: ["top-start"],
+        }),
+        shift(),
+      ],
+      strategy: "absolute",
+    });
     useEffect(() => {
       if (selectedIndex >= 0 && suggestionListRef.current) {
         const selectedElement =
@@ -103,104 +108,85 @@ export const SearchSuggestion = forwardRef(
       }
     }, [selectedIndex]);
 
-    const handleFocus = () => {
-      setShowSuggestions(true);
-    };
-
-    const handleBlur = (e) => {
-      // Delay hiding suggestions to allow click event on suggestion item
-      requestAnimationFrame(() => {
-        const relatedTarget = e.relatedTarget;
-        // Check if the focus is moving outside the component (input and suggestion list)
-        if (
-          !suggestionContainerRef.current ||
-          (!suggestionContainerRef.current.contains(relatedTarget) &&
-            relatedTarget !== inputRefInternal.current) // Check if focus moved away from input too
-        ) {
-          setShowSuggestions(false);
-        }
-      });
-    };
-
     return (
-      <div className="relative w-full max-w-md" onBlur={handleBlur}>
-        {" "}
-        {/* Attach onBlur here */}
-        <div className="relative ">
+      <div className="relative w-full max-w-md">
+        <div className="relative " ref={refs.setReference}>
           <Input
-            ref={inputRefInternal} // Use internal ref here
+            ref={ref}
             type="text"
-            disabled={disabled}
             value={value}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            onFocus={handleFocus} // Keep onFocus
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder || "Search or type"}
-            className="pr-8 hover:cursor-pointer font-semibold"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={showSuggestions}
-            aria-controls={showSuggestions ? "suggestion-listbox" : undefined}
-            aria-activedescendant={
-              selectedIndex >= 0
-                ? `suggestion-item-${selectedIndex}`
-                : undefined
-            }
+            className="pr-8 hover:cursor-pointer font-semibold" // Add right padding to accommodate the icon
+            {...restProps}
           />
-          {/* <ChevronsUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50 " /> */}
+          <ChevronsUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50 " />
         </div>
+
         {showSuggestions && filteredSuggestions.length > 0 && (
           <div
-            ref={suggestionContainerRef} // Attach ref to the container
-            className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
-            tabIndex={-1} // Make it focusable for blur check, but not via Tab
+            ref={refs.setFloating}
+            style={{
+              ...floatingStyles,
+              width: "100%",
+              position: "absolute",
+              left: 0,
+              marginTop: "4px",
+            }}
+            className="z-[9999] bg-popover rounded-md border shadow-md"
           >
-            <ul
-              ref={suggestionListRef}
-              id="suggestion-listbox" // Add id for aria-controls
-              role="listbox" // Add role
+            <ScrollArea
+              className={`${filteredSuggestions.length > 5 ? "h-[200px]" : ""}`}
             >
-              {filteredSuggestions.map((suggestion, index) => (
-                <li
-                  key={suggestion._id}
-                  id={`suggestion-item-${index}`} // Add id for aria-activedescendant
-                  role="option" // Add role
-                  aria-selected={index === selectedIndex} // Add aria-selected
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  onMouseEnter={() => setSelectedIndex(index)} // Add mouse enter to highlight
-                  className={`px-4 py-2 font-semibold cursor-pointer hover:bg-blue-100 focus:bg-blue-100 focus:outline-none ${
-                    // Update styles
-                    index === selectedIndex ? "bg-blue-200" : ""
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="capitalize text-sm">
-                      {suggestion.name}
-                    </span>
-                    {showAmount && suggestion?.currentBalance !== undefined && (
-                      <Badge
-                        variant={
-                          suggestion?.currentBalance <= 0
-                            ? "destructive"
-                            : "success"
-                        }
-                        className={"font-medium"}
-                      >
-                        {formatCurrency(suggestion?.currentBalance || 0)}
-                      </Badge>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+              <ul>
+                {filteredSuggestions.map((suggestion, index) => (
+                  <li
+                    key={suggestion._id}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                      index === selectedIndex
+                        ? "bg-accent text-accent-foreground"
+                        : ""
+                    } ${
+                      suggestion.isTemplate ? "border-l-4 border-blue-500" : ""
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize">{suggestion.name}</span>
+                        {suggestion.isTemplate && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-blue-100 text-blue-700 text-xs"
+                          >
+                            Template
+                          </Badge>
+                        )}
+                      </div>
+                      {showStock && suggestion.quantity !== undefined && (
+                        <Badge
+                          variant={
+                            suggestion.quantity <= 100
+                              ? "destructive"
+                              : "success"
+                          }
+                        >
+                          {suggestion.quantity}
+                        </Badge>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
           </div>
         )}
       </div>
     );
   }
 );
-
-// Add displayName for better debugging
-SearchSuggestion.displayName = "SearchSuggestion";
 
 export default SearchSuggestion;

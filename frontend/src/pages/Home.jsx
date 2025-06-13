@@ -3,7 +3,19 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { CardContent, Card } from "../components/ui/card";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Users, BarChart, Pill, Loader2, Eye, EyeOff, Menu, LogIn, FileText, CreditCard } from "lucide-react";
+import {
+  ShieldCheck,
+  Users,
+  BarChart,
+  Pill,
+  Loader2,
+  Eye,
+  EyeOff,
+  Menu,
+  LogIn,
+  FileText,
+  CreditCard,
+} from "lucide-react";
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,6 +29,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../components/ui/sheet";
+import { Label } from "../components/ui/label";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
@@ -24,18 +37,21 @@ export default function LandingPage() {
   const location = useLocation();
   const featuresRef = useRef(null);
   const [formData, setFormData] = useState({
-    pharmacyId: "",
-    username: "", // Changed from email to username
+    username: "",
     password: "",
+    shopId: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const loginStatus = useSelector((state) => state.user.loginStatus);
   const loginError = useSelector((state) => state.user.loginError);
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
-  // Add a new ref for the Hospital ID input
-  const pharmacyIdRef = useRef(null);
+  // Add a new ref for the Shop ID input
+  const shopIdRef = useRef(null);
+  const usernameRef = useRef(null);
+  const passwordRef = useRef(null);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -64,7 +80,7 @@ export default function LandingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.pharmacyId && formData.username && formData.password) {
+    if (formData.shopId && formData.username && formData.password) {
       setIsLoading(true);
       try {
         await dispatch(loginUser(formData)).unwrap();
@@ -91,15 +107,15 @@ export default function LandingPage() {
 
   // Add a new function to handle the "Get Started" button click
   const handleGetStarted = () => {
-    if (pharmacyIdRef.current) {
-      pharmacyIdRef.current.focus();
-      pharmacyIdRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (shopIdRef.current) {
+      shopIdRef.current.focus();
+      shopIdRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
 
   // Add a new function to handle the "Learn More" button click
   const handleLearnMore = () => {
-    navigate('/about');
+    navigate("/about");
   };
 
   const closeDrawer = () => {
@@ -108,42 +124,47 @@ export default function LandingPage() {
 
   const handleNavLinkClick = (e, action) => {
     closeDrawer();
-    if (action === 'scrollToFeatures') {
+    if (action === "scrollToFeatures") {
       scrollToFeatures(e);
     }
   };
 
   const scrollToLoginForm = () => {
-    if (pharmacyIdRef.current) {
-      pharmacyIdRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (shopIdRef.current) {
+      shopIdRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
 
   // Update the page title and description
   const pageTitle = "Streamline Your Business Billing";
-  const pageDescription = "The Billing provides a comprehensive solution for efficient billing, invoice management, and financial reporting for businesses of all sizes.";
+  const pageDescription =
+    "The Billing provides a comprehensive solution for efficient billing, invoice management, and financial reporting for businesses of all sizes.";
 
   // Update the features
   const features = [
     {
       icon: <FileText className="h-12 w-12 text-blue-600" />,
       title: "Easy Invoice Creation",
-      description: "Create professional invoices quickly with customizable templates and automated calculations."
+      description:
+        "Create professional invoices quickly with customizable templates and automated calculations.",
     },
     {
       icon: <Users className="h-12 w-12 text-blue-600" />,
       title: "Client Management",
-      description: "Efficiently manage client information, payment history, and communication all in one place."
+      description:
+        "Efficiently manage client information, payment history, and communication all in one place.",
     },
     {
       icon: <CreditCard className="h-12 w-12 text-blue-600" />,
       title: "Multiple Payment Options",
-      description: "Accept various payment methods and integrate with popular payment gateways for smooth transactions."
+      description:
+        "Accept various payment methods and integrate with popular payment gateways for smooth transactions.",
     },
     {
       icon: <BarChart className="h-12 w-12 text-blue-600" />,
       title: "Financial Reporting",
-      description: "Generate comprehensive financial reports and gain insights into your business performance."
+      description:
+        "Generate comprehensive financial reports and gain insights into your business performance.",
     },
   ];
 
@@ -174,7 +195,7 @@ export default function LandingPage() {
                 <a
                   href="#features"
                   className="text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
-                  onClick={(e) => handleNavLinkClick(e, 'scrollToFeatures')}
+                  onClick={(e) => handleNavLinkClick(e, "scrollToFeatures")}
                 >
                   Features
                 </a>
@@ -229,9 +250,9 @@ export default function LandingPage() {
             Contact
           </Link>
         </nav>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="md:hidden mr-2"
           onClick={scrollToLoginForm}
         >
@@ -253,7 +274,7 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="hidden md:flex lg:flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button 
+                  <Button
                     className="w-full sm:w-auto inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 sm:px-8 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-700 disabled:pointer-events-none disabled:opacity-50"
                     onClick={handleGetStarted}
                   >
@@ -275,19 +296,19 @@ export default function LandingPage() {
                     <div className="space-y-2">
                       <label
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        htmlFor="pharmacyId"
+                        htmlFor="shopId"
                       >
-                        Business ID
+                        Shop ID
                       </label>
                       <Input
                         className="w-full flex h-10 font-semibold rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-                        id="pharmacyId"
-                        placeholder="Enter your Business ID"
+                        id="shopId"
+                        placeholder="Enter your Shop ID"
                         type="text"
                         required
-                        value={formData.pharmacyId}
+                        value={formData.shopId}
                         onChange={handleInputChange}
-                        ref={pharmacyIdRef}
+                        ref={shopIdRef}
                       />
                     </div>
                     <div className="space-y-2">
@@ -305,6 +326,7 @@ export default function LandingPage() {
                         required
                         value={formData.username}
                         onChange={handleInputChange}
+                        ref={usernameRef}
                       />
                     </div>
                     <div className="space-y-2">
@@ -323,6 +345,7 @@ export default function LandingPage() {
                           required
                           value={formData.password}
                           onChange={handleInputChange}
+                          ref={passwordRef}
                         />
                         <button
                           type="button"
@@ -371,7 +394,10 @@ export default function LandingPage() {
             </h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((feature, index) => (
-                <div key={index} className="flex flex-col items-center text-center space-y-4">
+                <div
+                  key={index}
+                  className="flex flex-col items-center text-center space-y-4"
+                >
                   {feature.icon}
                   <h3 className="text-xl font-bold">{feature.title}</h3>
                   <p className="text-gray-500">{feature.description}</p>
@@ -382,7 +408,9 @@ export default function LandingPage() {
         </section>
       </main>
       <footer className="flex flex-col sm:flex-row justify-between items-center py-6 px-4 md:px-6 border-t bg-white">
-        <p className="text-xs text-gray-500 mb-2 sm:mb-0">© 2024 The Billing. All rights reserved.</p>
+        <p className="text-xs text-gray-500 mb-2 sm:mb-0">
+          © 2024 The Billing. All rights reserved.
+        </p>
         <nav className="flex gap-4">
           <Link
             className="text-xs hover:underline underline-offset-4"

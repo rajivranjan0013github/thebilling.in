@@ -174,7 +174,7 @@ export default function SelectDistributorDlg({
                   MOBILE NO
                 </TableHead>
                 <TableHead className="w-[25%] text-left text-sm font-semibold">
-                  GSTIN / DRUG LIC
+                  GSTIN
                 </TableHead>
                 <TableHead className="w-[20%] text-left text-sm font-semibold">
                   BALANCE

@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const inventorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    unit: String,
+    primaryUnit: String,
     pack: { type: Number, default: 1 },
-    secondary_unit: String,
+    secondaryUnit: String,
     quantity: { type: Number, default: 0 },
     category: String,
     purchases: [{ type: mongoose.Schema.Types.ObjectId, ref: "Invoice" }],
@@ -20,11 +20,16 @@ const inventorySchema = new mongoose.Schema(
     timeline: [{ type: mongoose.Schema.Types.ObjectId, ref: "StockTimeline" }],
     batch: [{ type: mongoose.Schema.Types.ObjectId, ref: "InventoryBatch" }],
     group: { type: [String], default: [] },
+    isBatchTracked: { type: Boolean, default: true },
+    mrp: { type: Number, default: 0 },
+    purchaseRate: { type: Number, default: 0 },
+    gstPer: { type: Number, default: 0 },
+    saleRate: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
-inventorySchema.plugin(pharmacyPlugin);
+inventorySchema.plugin(shopPlugin);
 
 // Add method to fix timeline balances after a specific point in time
 inventorySchema.statics.recalculateTimelineBalancesAfter = async function (

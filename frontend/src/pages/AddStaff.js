@@ -199,20 +199,7 @@ export default function AddStaff() {
               <span className="text-red-500 text-sm">{errors.name}</span>
             )}
           </div>
-          <div>
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              placeholder="johndoe"
-              value={formData.username || ""}
-              onChange={handleInputChange}
-              disabled={editMode && formData.username}
-              className="font-semibold"
-            />
-            {errors.username && (
-              <span className="text-red-500 text-sm">{errors.username}</span>
-            )}
-          </div>
+         
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -244,23 +231,20 @@ export default function AddStaff() {
             )}
           </div>
           <div>
-            <Label htmlFor="role">Role</Label>
-            <Select
-              onValueChange={(value) => handleSelectChange("role", value)}
-              value={formData.role}
-            >
-              <SelectTrigger className="font-semibold">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="doctor">Doctor</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.role && (
-              <span className="text-red-500 text-sm">{errors.role}</span>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              placeholder="johndoe"
+              value={formData.username || ""}
+              onChange={handleInputChange}
+              disabled={editMode && formData.username}
+              className="font-semibold"
+            />
+            {errors.username && (
+              <span className="text-red-500 text-sm">{errors.username}</span>
             )}
           </div>
+         
           {/* Password field: always show, but only required for new or if changing */}
           <div>
             <Label htmlFor="password">

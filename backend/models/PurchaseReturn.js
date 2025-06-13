@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const debitNoteCounterSchema = new mongoose.Schema({
   year: {
@@ -61,7 +61,7 @@ const purchaseReturnSchema = new mongoose.Schema(
           required: true,
         },
         productName: String,
-        batchNumber: String,
+      
         batchId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "InventoryBatch",
@@ -174,8 +174,8 @@ const purchaseReturnSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Apply pharmacy plugin
-purchaseReturnSchema.plugin(pharmacyPlugin);
+// Apply shop plugin
+purchaseReturnSchema.plugin(shopPlugin);
 
 purchaseReturnSchema.statics.getNextDebitNoteNumber = async function (session) {
   const currentYear = new Date().getFullYear();

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { pharmacyPlugin } from "../plugins/pharmacyPlugin.js";
+import { shopPlugin } from "../plugins/shopPlugin.js";
 
 const invoiceShema = new mongoose.Schema(
   {
@@ -21,6 +21,7 @@ const invoiceShema = new mongoose.Schema(
           ref: "InventoryBatch",
         },
         expiry: String,
+        isBatchTracked: Boolean,
         HSN: String,
         mrp: Number,
         quantity: Number,
@@ -109,6 +110,6 @@ const invoiceShema = new mongoose.Schema(
   { timestamps: true }
 );
 
-invoiceShema.plugin(pharmacyPlugin);
+invoiceShema.plugin(shopPlugin);
 
 export const InvoiceSchema = mongoose.model("Invoice", invoiceShema);

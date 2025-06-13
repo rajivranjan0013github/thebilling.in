@@ -59,20 +59,21 @@ router.get("/metrics", verifyToken, async (req, res) => {
       },
     ];
 
-    const salesSummaryResult = await SalesBill.pharmacyAwareAggregate(salesPipeline);
-    const salesSummary =
-      salesSummaryResult[0] || {
-        totalRevenue: 0,
-        totalAmountReceived: 0,
-        totalSales: 0,
-        totalItems: 0,
-        totalAmountDue: 0,
-        dueInvoicesCount: 0,
-      };
+    const salesSummaryResult = await SalesBill.shopAwareAggregate(
+      salesPipeline
+    );
+    const salesSummary = salesSummaryResult[0] || {
+      totalRevenue: 0,
+      totalAmountReceived: 0,
+      totalSales: 0,
+      totalItems: 0,
+      totalAmountDue: 0,
+      dueInvoicesCount: 0,
+    };
 
     // --- Purchase Calculations ---
     const purchasePipeline = [
-       {
+      {
         $match: {
           invoiceDate: { $gte: start, $lte: end },
           status: "active",
@@ -111,110 +112,140 @@ router.get("/metrics", verifyToken, async (req, res) => {
       },
     ];
 
-    const purchaseSummaryResult = await InvoiceSchema.pharmacyAwareAggregate(purchasePipeline);
-    const purchaseSummary =
-      purchaseSummaryResult[0] || {
-        totalCost: 0,
-        totalAmountPaid: 0,
-        totalPurchases: 0,
-        totalAmountDue: 0,
-        dueInvoicesCount: 0,
-      };
-
+    const purchaseSummaryResult = await InvoiceSchema.shopAwareAggregate(
+      purchasePipeline
+    );
+    const purchaseSummary = purchaseSummaryResult[0] || {
+      totalCost: 0,
+      totalAmountPaid: 0,
+      totalPurchases: 0,
+      totalAmountDue: 0,
+      dueInvoicesCount: 0,
+    };
 
     // --- Payment Calculations ---
     const paymentInPipeline = [
-        {
-            $match: {
-                paymentDate: { $gte: start, $lte: end },
-                paymentType: "Payment In",
-                status: "COMPLETED",
-            },
+      {
+        $match: {
+          paymentDate: { $gte: start, $lte: end },
+          paymentType: "Payment In",
+          status: "COMPLETED",
         },
-        {
-            $facet: {
-                totalCollection: [
-                    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-                    { $project: { _id: 0, totalAmount: { $ifNull: ["$totalAmount", 0] } } }
-                ],
-                accountWiseCollection: [
-                    {
-                        $group: {
-                             _id: "$accountId",
-                             totalAmount: { $sum: "$amount" }
-                        }
-                    },
-                     { $sort: { _id: 1 } },
-                ],
-                methodWiseCollection: [
-                     { $group: { _id: "$paymentMethod", totalAmount: { $sum: "$amount" } } },
-                     { $project: { _id: 0, method: "$_id", totalAmount: 1 } },
-                     { $sort: { method: 1 } },
-                ]
-            }
-        }
+      },
+      {
+        $facet: {
+          totalCollection: [
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+            {
+              $project: {
+                _id: 0,
+                totalAmount: { $ifNull: ["$totalAmount", 0] },
+              },
+            },
+          ],
+          accountWiseCollection: [
+            {
+              $group: {
+                _id: "$accountId",
+                totalAmount: { $sum: "$amount" },
+              },
+            },
+            { $sort: { _id: 1 } },
+          ],
+          methodWiseCollection: [
+            {
+              $group: {
+                _id: "$paymentMethod",
+                totalAmount: { $sum: "$amount" },
+              },
+            },
+            { $project: { _id: 0, method: "$_id", totalAmount: 1 } },
+            { $sort: { method: 1 } },
+          ],
+        },
+      },
     ];
 
     const paymentOutPipeline = [
-        {
-            $match: {
-                paymentDate: { $gte: start, $lte: end },
-                paymentType: "Payment Out",
-                status: "COMPLETED",
-            },
+      {
+        $match: {
+          paymentDate: { $gte: start, $lte: end },
+          paymentType: "Payment Out",
+          status: "COMPLETED",
         },
-        {
-            $facet: {
-                totalPayment: [
-                    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-                    { $project: { _id: 0, totalAmount: { $ifNull: ["$totalAmount", 0] } } }
-                ],
-                 methodWisePayment: [
-                     { $group: { _id: "$paymentMethod", totalAmount: { $sum: "$amount" } } },
-                     { $project: { _id: 0, method: "$_id", totalAmount: 1 } },
-                     { $sort: { method: 1 } },
-                 ],
-                 accountWisePayment: [
-                    {
-                        $group: {
-                             _id: "$accountId",
-                             totalAmount: { $sum: "$amount" }
-                        }
-                    },
-                     { $sort: { _id: 1 } },
-                 ]
-            }
-        }
+      },
+      {
+        $facet: {
+          totalPayment: [
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+            {
+              $project: {
+                _id: 0,
+                totalAmount: { $ifNull: ["$totalAmount", 0] },
+              },
+            },
+          ],
+          methodWisePayment: [
+            {
+              $group: {
+                _id: "$paymentMethod",
+                totalAmount: { $sum: "$amount" },
+              },
+            },
+            { $project: { _id: 0, method: "$_id", totalAmount: 1 } },
+            { $sort: { method: 1 } },
+          ],
+          accountWisePayment: [
+            {
+              $group: {
+                _id: "$accountId",
+                totalAmount: { $sum: "$amount" },
+              },
+            },
+            { $sort: { _id: 1 } },
+          ],
+        },
+      },
     ];
 
     const [paymentInResult, paymentOutResult] = await Promise.all([
-      Payment.pharmacyAwareAggregate(paymentInPipeline),
-      Payment.pharmacyAwareAggregate(paymentOutPipeline),
+      Payment.shopAwareAggregate(paymentInPipeline),
+      Payment.shopAwareAggregate(paymentOutPipeline),
     ]);
 
-    const totalPaymentIn = paymentInResult[0]?.totalCollection[0]?.totalAmount || 0;
-    const accountWiseCollection = paymentInResult[0]?.accountWiseCollection || [];
-    const methodWiseCollectionIn = paymentInResult[0]?.methodWiseCollection || [];
+    const totalPaymentIn =
+      paymentInResult[0]?.totalCollection[0]?.totalAmount || 0;
+    const accountWiseCollection =
+      paymentInResult[0]?.accountWiseCollection || [];
+    const methodWiseCollectionIn =
+      paymentInResult[0]?.methodWiseCollection || [];
 
-    const totalPaymentOut = paymentOutResult[0]?.totalPayment[0]?.totalAmount || 0;
-    const methodWiseCollectionOut = paymentOutResult[0]?.methodWisePayment || [];
+    const totalPaymentOut =
+      paymentOutResult[0]?.totalPayment[0]?.totalAmount || 0;
+    const methodWiseCollectionOut =
+      paymentOutResult[0]?.methodWisePayment || [];
     const accountWisePaymentOut = paymentOutResult[0]?.accountWisePayment || [];
 
     const paymentSummary = {
-        totalPaymentIn,
-        totalPaymentOut,
-        netCashFlow: totalPaymentIn - totalPaymentOut,
-        accountWiseCollection: accountWiseCollection.map(acc => ({ accountId: acc._id, totalAmount: acc.totalAmount })),
-        paymentInMethods: methodWiseCollectionIn,
-        paymentOutMethods: methodWiseCollectionOut,
-        accountWisePayment: accountWisePaymentOut.map(acc => ({ accountId: acc._id, totalAmount: acc.totalAmount })),
+      totalPaymentIn,
+      totalPaymentOut,
+      netCashFlow: totalPaymentIn - totalPaymentOut,
+      accountWiseCollection: accountWiseCollection.map((acc) => ({
+        accountId: acc._id,
+        totalAmount: acc.totalAmount,
+      })),
+      paymentInMethods: methodWiseCollectionIn,
+      paymentOutMethods: methodWiseCollectionOut,
+      accountWisePayment: accountWisePaymentOut.map((acc) => ({
+        accountId: acc._id,
+        totalAmount: acc.totalAmount,
+      })),
     };
-
 
     // --- Financial Metrics (Strictly based on sales/purchases within the range) ---
     const financialMetrics = {
-        totalReceivables: salesSummary.totalAmountDue, // Receivables from sales made in the period
-        totalPayables: purchaseSummary.totalAmountDue, // Payables from purchases made in the period
+      totalReceivables: salesSummary.totalAmountDue, // Receivables from sales made in the period
+      totalPayables: purchaseSummary.totalAmountDue, // Payables from purchases made in the period
     };
 
     // --- Final Response (Only range-bound metrics) ---
@@ -223,7 +254,7 @@ router.get("/metrics", verifyToken, async (req, res) => {
         startDate: start.toISOString().split("T")[0],
         endDate: end.toISOString().split("T")[0],
       },
-      salesSummary, 
+      salesSummary,
       purchaseSummary,
       paymentSummary,
       financialMetrics, // Contains only range-relevant receivables/payables

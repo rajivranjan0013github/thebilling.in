@@ -20,19 +20,16 @@ import {
   TabsTrigger,
 } from "../components/ui/tabs";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  fetchPharmacyInfo,
-  updatePharmacyInfo,
-} from "../redux/slices/pharmacySlice";
+import { fetchShopInfo, updateShopInfo } from "../redux/slices/shopSlice";
 import { X, Plus, Upload } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { ScrollArea } from "../components/ui/scroll-area";
 
-const PharmacyInfo = () => {
+const ShopInfo = () => {
   const { toast } = useToast();
   const dispatch = useDispatch();
-  const { pharmacyInfo, pharmacyInfoStatus, updateStatus } = useSelector(
-    (state) => state.pharmacy
+  const { shopInfo, shopInfoStatus, updateStatus } = useSelector(
+    (state) => state.shop
   );
   const [formData, setFormData] = useState({
     name: "",
@@ -41,9 +38,8 @@ const PharmacyInfo = () => {
     contactNumber: "",
     email: "",
     website: "",
-    pharmacyId: "",
+    shopId: "",
     gstNumber: "",
-    drugLicenceNumber: "",
     itemExpiryThreshold: 3,
     itemCategories: [],
   });
@@ -53,20 +49,20 @@ const PharmacyInfo = () => {
   const [logoFile, setLogoFile] = useState(null);
 
   useEffect(() => {
-    if (pharmacyInfoStatus === "idle") {
-      dispatch(fetchPharmacyInfo());
+    if (shopInfoStatus === "idle") {
+      dispatch(fetchShopInfo());
     }
-  }, [dispatch, pharmacyInfoStatus]);
+  }, [dispatch, shopInfoStatus]);
 
   useEffect(() => {
-    if (pharmacyInfo) {
+    if (shopInfo) {
       setFormData((prevData) => ({
         ...prevData,
-        ...pharmacyInfo,
+        ...shopInfo,
       }));
       setLogoPreview(null);
     }
-  }, [pharmacyInfo]);
+  }, [shopInfo]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -100,12 +96,9 @@ const PharmacyInfo = () => {
     if (!logoFile) return null;
 
     try {
-      const response = await fetch(
-        `${Backend_URL}/api/pharmacies/getUploadUrl`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${Backend_URL}/api/shops/getUploadUrl`, {
+        credentials: "include",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to upload logo");
@@ -152,16 +145,16 @@ const PharmacyInfo = () => {
         }
       }
 
-      await dispatch(updatePharmacyInfo(updatedFormData)).unwrap();
+      await dispatch(updateShopInfo(updatedFormData)).unwrap();
       toast({
         variant: "success",
         title: "Updated Successfully",
-        description: "Pharmacy information has been updated successfully.",
+        description: "Shop information has been updated successfully.",
       });
     } catch (error) {
       toast({
         title: "Unable to update",
-        description: "Failed to update pharmacy information. Please try again.",
+        description: "Failed to update shop information. Please try again.",
         variant: "destructive",
       });
     }
@@ -190,10 +183,10 @@ const PharmacyInfo = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="mb-4 sm:mb-0">
             <CardTitle className="text-xl sm:text-2xl font-bold">
-              Pharmacy Information Management
+              Shop Information Management
             </CardTitle>
             <CardDescription className="text-gray-500">
-              Manage your pharmacy's details
+              Manage your shop's details
             </CardDescription>
           </div>
           <Button
@@ -206,33 +199,30 @@ const PharmacyInfo = () => {
         </div>
       </CardHeader>
       <CardContent className="pt-6">
-        <Tabs defaultValue="pharmacy" className="w-full">
+        <Tabs defaultValue="shop" className="w-full">
           <TabsList className="grid w-full sm:w-1/2 grid-cols-2 mb-6">
-            <TabsTrigger value="pharmacy" className="text-sm font-medium">
-              <span className="hidden sm:inline">Pharmacy Information</span>
-              <span className="sm:hidden">Pharmacy</span>
+            <TabsTrigger value="shop" className="text-sm font-medium">
+              <span className="hidden sm:inline">Shop Information</span>
+              <span className="sm:hidden">Shop</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="pharmacySetting"
-              className="text-sm font-medium"
-            >
+            <TabsTrigger value="shopSetting" className="text-sm font-medium">
               <span className="hidden sm:inline">Detailed Setting</span>
               <span className="sm:hidden">Detailed Setting</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pharmacy">
+          <TabsContent value="shop">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <InputField
-                  label="Pharmacy ID"
-                  name="pharmacyId"
-                  value={formData.pharmacyId}
+                  label="Shop ID"
+                  name="shopId"
+                  value={formData.shopId}
                   onChange={handleChange}
                   disabled
                 />
                 <InputField
-                  label="Pharmacy Name"
+                  label="Shop Name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
@@ -266,12 +256,7 @@ const PharmacyInfo = () => {
                   value={formData.gstNumber}
                   onChange={handleChange}
                 />
-                <InputField
-                  label="Drug Licence Number"
-                  name="drugLicenceNumber"
-                  value={formData.drugLicenceNumber}
-                  onChange={handleChange}
-                />
+             
                 <TextareaField
                   label="Address"
                   name="address"
@@ -280,25 +265,18 @@ const PharmacyInfo = () => {
                   required
                 />
               </div>
-              <div className="col-span-1">
-                <div className="mb-6">
-                  <Label htmlFor="logo-upload" className="text-sm font-medium">
-                    Pharmacy Logo
-                  </Label>
-                  <div
-                    className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-full sm:w-40 h-40 cursor-pointer"
-                    onClick={triggerLogoUpload}
-                  >
-                    <div className="text-center">
-                      {logoPreview ? (
+              <div className="lg:col-span-1">
+                <div className="flex flex-col items-center">
+                  <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-gray-200 flex items-center justify-center mb-4">
+                  {logoPreview ? (
                         <img
                           src={logoPreview}
                           alt="Logo Preview"
                           className="mx-auto h-32 w-32 object-cover"
                         />
-                      ) : pharmacyInfo?.logoUsable ? (
+                      ) : shopInfo?.logoUsable ? (
                         <img
-                          src={pharmacyInfo.logoUsable}
+                          src={shopInfo.logoUsable}
                           alt="Pharmacy Logo"
                           className="mx-auto h-32 w-32 object-cover"
                         />
@@ -309,42 +287,50 @@ const PharmacyInfo = () => {
                           className="mx-auto h-32 w-32 object-cover"
                         />
                       ) : (
-                        <div className="flex flex-col items-center">
-                          <Upload
-                            className="h-10 w-10 text-gray-300"
-                            aria-hidden="true"
-                          />
-                          <span className="mt-2 block text-sm font-semibold text-gray-900">
-                            Upload
-                          </span>
-                        </div>
+                        <img
+                          src="https://via.placeholder.com/150"
+                          alt="Placeholder"
+                          className="mx-auto h-32 w-32 object-cover"
+                        />
                       )}
-                      <input
-                        id="logo-upload"
-                        name="logo-upload"
-                        type="file"
-                        className="hidden"
-                        onChange={handleLogoUpload}
-                        accept="image/*"
-                      />
-                    </div>
                   </div>
+                  <input
+                    type="file"
+                    id="logo-upload"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                    accept="image/*"
+                  />
+                  <Button onClick={triggerLogoUpload} variant="outline">
+                    <Upload className="mr-2 h-4 w-4" /> Change Logo
+                  </Button>
                 </div>
-                <CategoryField
-                  label="Pharmacy Service Categories"
-                  categories={formData.pharmacyServiceCategories}
-                  newCategory={newCategory}
-                  setNewCategory={setNewCategory}
-                  onAdd={() => handleAddCategory("pharmacyServiceCategories")}
-                  onRemove={(index) =>
-                    handleRemoveCategory("pharmacyServiceCategories", index)
-                  }
-                />
               </div>
             </div>
+          
           </TabsContent>
 
-          <TabsContent value="pharmacySetting"></TabsContent>
+          <TabsContent value="shopSetting">
+            <div className="space-y-6">
+              <InputField
+                label="Item Expiry Threshold (in months)"
+                name="itemExpiryThreshold"
+                type="number"
+                value={formData.itemExpiryThreshold}
+                onChange={handleChange}
+              />
+              <CategoryField
+                label="Item Categories"
+                categories={formData.itemCategories}
+                newCategory={newCategory}
+                setNewCategory={setNewCategory}
+                onAdd={() => handleAddCategory("itemCategories")}
+                onRemove={(index) =>
+                  handleRemoveCategory("itemCategories", index)
+                }
+              />
+            </div>
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
@@ -361,8 +347,9 @@ const InputField = ({
   disabled = false,
 }) => (
   <div className="space-y-2">
-    <Label htmlFor={name} className="text-sm font-medium">
+    <Label htmlFor={name} className="font-medium">
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </Label>
     <Input
       id={name}
@@ -370,7 +357,6 @@ const InputField = ({
       type={type}
       value={value}
       onChange={onChange}
-      placeholder={`Enter ${label.toLowerCase()}`}
       required={required}
       disabled={disabled}
       className="w-full"
@@ -380,15 +366,15 @@ const InputField = ({
 
 const TextareaField = ({ label, name, value, onChange, required = false }) => (
   <div className="space-y-2">
-    <Label htmlFor={name} className="text-sm font-medium">
+    <Label htmlFor={name} className="font-medium">
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </Label>
     <Textarea
       id={name}
       name={name}
       value={value}
       onChange={onChange}
-      placeholder={`Enter ${label.toLowerCase()}`}
       required={required}
       className="w-full"
     />
@@ -409,46 +395,36 @@ const CategoryField = ({
   };
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      <div className="flex flex-col space-y-2">
-        <form onSubmit={handleSubmit} className="flex space-x-2">
-          <Input
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="Enter a new category"
-            className="flex-grow"
-          />
-          <Button type="submit" disabled={!newCategory.trim()}>
-            <Plus size={16} />
-          </Button>
-        </form>
-        <ScrollArea className="h-[150px] w-full border rounded-md p-4">
-          {categories?.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="text-sm py-1 px-2 flex items-center space-x-1"
-                >
-                  <span>{category}</span>
-                  <button
-                    onClick={() => onRemove(index)}
-                    className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
-                  >
-                    <X size={14} />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No categories added yet.</p>
-          )}
-        </ScrollArea>
+    <div className="space-y-4">
+      <Label className="font-medium text-base">{label}</Label>
+      <div className="flex flex-wrap gap-2">
+        {categories.map((cat, index) => (
+          <Badge key={index} variant="secondary" className="text-sm">
+            {cat}
+            <button
+              type="button"
+              onClick={() => onRemove(index)}
+              className="ml-2 text-gray-500 hover:text-red-500"
+            >
+              <X size={14} />
+            </button>
+          </Badge>
+        ))}
       </div>
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-2">
+        <Input
+          type="text"
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
+          placeholder="Add new category"
+          className="flex-grow"
+        />
+        <Button type="submit" size="icon" variant="outline">
+          <Plus size={16} />
+        </Button>
+      </form>
     </div>
   );
 };
 
-export default PharmacyInfo;
+export default ShopInfo;

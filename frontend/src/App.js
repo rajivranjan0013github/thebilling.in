@@ -13,9 +13,9 @@ import Settings from "./pages/Settings";
 import StaffProfile from "./pages/StaffProfile";
 import AddStaff from "./pages/AddStaff";
 import { fetchUserData } from "./redux/slices/userSlice";
-import { fetchPharmacyInfo } from "./redux/slices/pharmacySlice";
+import { fetchShopInfo } from "./redux/slices/shopSlice";
 import { setLoading } from "./redux/slices/loaderSlice";
-import PharmacyInfo from "./pages/PharmacyInfo";
+import ShopInfo from "./pages/ShopInfo";
 import AboutPage from "./pages/About";
 import ContactPage from "./pages/ContactUs";
 import Expenses from "./pages/Expenses";
@@ -59,7 +59,7 @@ const AppContent = () => {
         if (isAuthenticated) {
           return Promise.all([
             dispatch(fetchStaffMembers()),
-            dispatch(fetchPharmacyInfo()),
+            dispatch(fetchShopInfo()),
           ]);
         }
       })
@@ -107,10 +107,7 @@ const AppContent = () => {
               <Route path="/addstaff" element={<AddStaff />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/editstaff/:staffId" element={<AddStaff />} />
-              <Route
-                path="/settings/pharmacy-info"
-                element={<PharmacyInfo />}
-              />
+              <Route path="/settings/shop-info" element={<ShopInfo />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/sales" element={<Sales />} />
               <Route path="/purchase" element={<Purchase />} />

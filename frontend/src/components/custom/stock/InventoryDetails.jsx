@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "../../ui/alert-dialog";
 import PurchaseTab from "./PurchaseTab";
-import {formatCurrency} from '../../../utils/Helper'
+import { formatCurrency } from "../../../utils/Helper";
 
 export default function InventoryDetails({ inventoryId }) {
   const [inventoryDetails, setItemDetails] = useState(null);
@@ -124,20 +124,16 @@ export default function InventoryDetails({ inventoryId }) {
             </CardContent>
           </Card>
           <div>
-            <h1 className="text-2xl font-semibold capitalize">{inventoryDetails?.name}</h1>
+            <h1 className="text-2xl font-semibold capitalize">
+              {inventoryDetails?.name}
+            </h1>
             <p className="text-muted-foreground">{inventoryDetails?.mfcName}</p>
-            <div className="flex items-center gap-2 mt-2">
-              <div className="bg-orange-500 text-white p-1 rounded-full">
-                Rx
-              </div>
-              <div className="bg-red-500 text-white p-1 rounded-full">H</div>
-              <span>{inventoryDetails?.composition}</span>
-            </div>
+           
           </div>
         </div>
         <div className="flex flex-col gap-5">
           <div className="text-end text-lg">
-            <p>{inventoryDetails?.location || '-'}</p>
+            <p>{inventoryDetails?.location || "-"}</p>
             <p className="text-xs text-gray-500">Location</p>
           </div>
           <div className="flex gap-4">
@@ -153,121 +149,161 @@ export default function InventoryDetails({ inventoryId }) {
               <Pencil className="w-4 h-4" />
               Edit Item
             </Button>
-            <Button
-              variant="default"
-              className="gap-2"
-              onClick={() => setIsManageInventoryOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Add Batch
-            </Button>
+            {inventoryDetails?.isBatchTracked && (
+              <Button
+                variant="default"
+                className="gap-2"
+                onClick={() => setIsManageInventoryOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Batch
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="batches">
+      <Tabs
+        defaultValue={
+          inventoryDetails?.isBatchTracked ? "batches" : "purchases"
+        }
+      >
         <div className="flex items-center justify-between border-b mt-2">
           <TabsList>
-            <TabsTrigger value="batches" className="relative">
-              BATCHES
-            </TabsTrigger>
+            {inventoryDetails?.isBatchTracked && (
+              <TabsTrigger value="batches" className="relative">
+                BATCHES
+              </TabsTrigger>
+            )}
             <TabsTrigger value="purchases">PURCHASES</TabsTrigger>
             <TabsTrigger value="sales">SALES</TabsTrigger>
             <TabsTrigger value="timeline">TIMELINE</TabsTrigger>
-          </TabsList> 
+          </TabsList>
         </div>
 
-        <TabsContent value="batches" className="mt-2">
-          {!inventoryDetails?.batch || inventoryDetails.batch.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <PackageX className="h-12 w-12 mb-2" />
-              <p>No batches found for this item</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className='pl-4'>BATCH NO</TableHead>
-                  <TableHead>PACK</TableHead>
-                  <TableHead>EXPIRY</TableHead>
-                  <TableHead className='text-center'>STATUS</TableHead>
-                  <TableHead className='text-center'>MRP</TableHead>
-                  <TableHead className='text-center'>PURC RATE</TableHead>
-                  <TableHead className='text-center'>NET PURC RATE</TableHead>
-                  <TableHead className='text-center'>SALE RATE</TableHead>
-                  <TableHead className='text-center'>QUANTITY</TableHead>
-                  <TableHead className='text-center'>ACTION</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className='border'>
-                {inventoryDetails.batch.map((batch) => (
-                  <TableRow key={batch?._id}>
-                    <TableCell className="font-medium pl-6">
-                      {batch?.batchNumber}
-                    </TableCell>
-                    <TableCell>{batch.pack}</TableCell>
-                    <TableCell>{batch.expiry}</TableCell>
-                    <TableCell className='text-center'>
-                      <Badge
-                        variant={batch.quantity > 0 ? "success" : "destructive"}
-                      >
-                        {batch.quantity > 0 ? "In Stock" : "Out of Stock"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className='text-center'>{formatCurrency(batch?.mrp)}</TableCell>
-                    <TableCell className='text-center'>{formatCurrency(batch?.purchaseRate)}</TableCell>
-                    <TableCell className='text-center'>
-                      <p>{formatCurrency(batch?.purchaseRate * (1 + (batch?.gstPer||0)/100) * (1-(batch?.discount||0)/100) )}</p>
-                      <p className="text-xs font-normal">Dis: {batch?.discount || 0}% | GST:{batch?.gstPer}%</p>
-                    </TableCell>
-                    <TableCell className='text-center'>
-                      <p>{batch.saleRate ? formatCurrency(batch?.saleRate) : formatCurrency(batch?.mrp)}</p>
-                      <p className="text-xs font-normal">inc {batch?.gstPer}% GST</p>
-                    </TableCell>
-                    {/* <TableCell className='text-center'>{batch.saleRate ? formatCurrency(batch?.saleRate) : formatCurrency(batch?.mrp)}</TableCell> */}
-                    <TableCell className='text-center'>
-                      {convertQuantity(batch?.quantity, batch?.pack)}
-                    </TableCell>
-                    <TableCell className='text-center'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="cursor-pointer flex items-center gap-2"
-                            onClick={() => handleEditBatch(batch)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer flex items-center gap-2 text-red-600"
-                            onClick={() => setBatchToDelete(batch)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+        {inventoryDetails?.isBatchTracked && (
+          <TabsContent value="batches" className="mt-2">
+            {!inventoryDetails?.batch || inventoryDetails.batch.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <PackageX className="h-12 w-12 mb-2" />
+                <p>No batches found for this item</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">BATCH NO</TableHead>
+                    <TableHead>PACK</TableHead>
+                    <TableHead>EXPIRY</TableHead>
+                    <TableHead className="text-center">STATUS</TableHead>
+                    <TableHead className="text-center">MRP</TableHead>
+                    <TableHead className="text-center">PURC RATE</TableHead>
+                    <TableHead className="text-center">NET PURC RATE</TableHead>
+                    <TableHead className="text-center">SALE RATE</TableHead>
+                    <TableHead className="text-center">QUANTITY</TableHead>
+                    <TableHead className="text-center">ACTION</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </TabsContent>
+                </TableHeader>
+                <TableBody className="border">
+                  {inventoryDetails.batch.map((batch) => (
+                    <TableRow key={batch?._id}>
+                      <TableCell className="font-medium pl-6">
+                        {batch?.batchNumber}
+                      </TableCell>
+                      <TableCell>{batch.pack}</TableCell>
+                      <TableCell>{batch.expiry}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          variant={
+                            batch.quantity > 0 ? "success" : "destructive"
+                          }
+                        >
+                          {batch.quantity > 0 ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {formatCurrency(batch?.mrp)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {formatCurrency(batch?.purchaseRate)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <p>
+                          {formatCurrency(
+                            batch?.purchaseRate *
+                              (1 + (batch?.gstPer || 0) / 100) *
+                              (1 - (batch?.discount || 0) / 100)
+                          )}
+                        </p>
+                        <p className="text-xs font-normal">
+                          Dis: {batch?.discount || 0}% | GST:{batch?.gstPer}%
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <p>
+                          {batch.saleRate
+                            ? formatCurrency(batch?.saleRate)
+                            : formatCurrency(batch?.mrp)}
+                        </p>
+                        <p className="text-xs font-normal">
+                          inc {batch?.gstPer}% GST
+                        </p>
+                      </TableCell>
+                      {/* <TableCell className='text-center'>{batch.saleRate ? formatCurrency(batch?.saleRate) : formatCurrency(batch?.mrp)}</TableCell> */}
+                      <TableCell className="text-center">
+                        {convertQuantity(batch?.quantity, batch?.pack)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="cursor-pointer flex items-center gap-2"
+                              onClick={() => handleEditBatch(batch)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer flex items-center gap-2 text-red-600"
+                              onClick={() => setBatchToDelete(batch)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </TabsContent>
+        )}
         <TabsContent value="purchases">
-          <PurchaseTab inventoryId={inventoryDetails?._id} />
+          <PurchaseTab
+            inventoryId={inventoryDetails?._id}
+            isBatchTracked={inventoryDetails?.isBatchTracked}
+          />
         </TabsContent>
         <TabsContent value="sales">
-          <SalesTab inventoryId={inventoryDetails?._id} />
+          <SalesTab
+            inventoryId={inventoryDetails?._id}
+            isBatchTracked={inventoryDetails?.isBatchTracked}
+          />
         </TabsContent>
         <TabsContent value="timeline">
-          <Timeline inventoryId={inventoryDetails?._id} />
+          <Timeline
+            inventoryId={inventoryDetails?._id}
+            inventoryName={inventoryDetails?.name}
+            isBatchTracked={inventoryDetails?.isBatchTracked}
+          />
         </TabsContent>
       </Tabs>
 
@@ -292,7 +328,9 @@ export default function InventoryDetails({ inventoryId }) {
       >
         <AlertDialogContent className="max-w-xl p-0 gap-0">
           <AlertDialogHeader className="px-4 py-2.5 flex flex-row items-center justify-between bg-gray-100 border-b">
-            <AlertDialogTitle className="text-base font-semibold">Delete Batch</AlertDialogTitle>
+            <AlertDialogTitle className="text-base font-semibold">
+              Delete Batch
+            </AlertDialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -305,19 +343,20 @@ export default function InventoryDetails({ inventoryId }) {
           </AlertDialogHeader>
           <div className="p-6">
             <AlertDialogDescription>
-              This will permanently delete the batch {batchToDelete?.batchNumber}. This action cannot be undone.
+              This will permanently delete the batch{" "}
+              {batchToDelete?.batchNumber}. This action cannot be undone.
             </AlertDialogDescription>
           </div>
           <div className="p-3 bg-gray-100 border-t flex items-center justify-end gap-2">
-            <Button 
-              onClick={() => setBatchToDelete(null)} 
-              variant="outline" 
+            <Button
+              onClick={() => setBatchToDelete(null)}
+              variant="outline"
               size="sm"
               disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => handleDeleteBatch(batchToDelete._id)}
               size="sm"
               disabled={isDeleting}

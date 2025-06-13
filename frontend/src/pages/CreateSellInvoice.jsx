@@ -95,7 +95,6 @@ export const calculateTotals = (products, adjustment = false) => {
 
 const inputKeys = [
   "customerName",
-  "doctorName",
   "product",
   "batchNumber",
   "hsn",
@@ -132,7 +131,6 @@ export default function CreateSellInvoice() {
   const [customerName, setCustomerName] = useState("");
   const { toast } = useToast();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const doctors = useSelector((state) => state.staff?.doctors);
   const [invoiceForPayment, setInvoiceForPayment] = useState(null);
   const [additionalDiscount, setAdditionalDiscount] = useState({
     per: "",
@@ -160,10 +158,7 @@ export default function CreateSellInvoice() {
   }, [status, settings]);
 
   // Convert doctors array to the format expected by CustomSearchSuggestion
-  const doctorSuggestions = doctors.map((doctor, index) => ({
-    _id: index + 1,
-    name: doctor.name?.includes("Dr") ? doctor.name : `Dr. ${doctor.name}`,
-  }));
+ 
 
   const [formData, setFormData] = useState({
     saleType: "invoice",
@@ -171,7 +166,6 @@ export default function CreateSellInvoice() {
     customerId: "",
     invoiceNumber: "",
     invoiceDate: new Date(),
-    doctorName: "",
     returnInvoiceNumber: "",
   });
   const [isCashCounter, setIsCashCounter] = useState(true);
@@ -200,7 +194,7 @@ export default function CreateSellInvoice() {
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [products, formData, invoiceDate, isCashCounter, customerName]); // Add dependencies that handleSaveInvoice uses
+  }, [products, formData, invoiceDate, isCashCounter, customerName]); 
 
    useEffect(() => {
     fetch(`${Backend_URL}/api/sales/invoice-number`, {
@@ -260,12 +254,14 @@ export default function CreateSellInvoice() {
     try {
       setLoading(true);
       // Format products data to match schema
+      console.log(products);
       const formattedProducts = products.map((product) => ({
         types: product.types,
         inventoryId: product.inventoryId,
         productName: product.productName,
         batchNumber: product.batchNumber,
         batchId: product.batchId,
+        isBatchTracked: product.isBatchTracked,
         expiry: product.expiry,
         mfcName: product.mfcName,
         HSN: product.HSN,
@@ -347,7 +343,6 @@ export default function CreateSellInvoice() {
         products: formattedProducts,
         grandTotal: roundToTwo(amountData.grandTotal),
         is_cash_customer: isCashCounter,
-        doctorName: formData?.doctorName,
         returnInvoiceNumber: formData?.returnInvoiceNumber,
         billSummary,
         // Payment details
@@ -389,7 +384,7 @@ export default function CreateSellInvoice() {
             customerName: "",
             invoiceNumber: "",
             invoiceDate: "",
-            doctorName: "",
+          
             overallDiscount: "",
           });
           setCustomerName("");
@@ -431,13 +426,15 @@ export default function CreateSellInvoice() {
       customerName: customer.name,
     });
     setIsCashCounter(false); // Uncheck cash/counter when customer is selected
-    if (inputRef && inputRef.current["doctorName"]) {
-      inputRef.current["doctorName"].focus();
+    if (inputRef && inputRef.current["product"]) {
+      inputRef.current["product"].focus();
     }
   };
 
   // Add this new function to handle key press events
   const handleKeyDown = (e, currentInputId) => {
+    console.log(currentInputId);
+    console.log(inputRef.current);
     if (e.key === "Enter") {
       e.preventDefault();
       const currentInputIndex = inputKeys.indexOf(currentInputId);
@@ -631,7 +628,7 @@ export default function CreateSellInvoice() {
               </div>
             </RadioGroup>
           </div>
-          <div className="col-span-4 grid-cols-4 grid gap-4 font-semibold">
+          <div className="col-span-3 grid-cols-3 grid gap-4 font-semibold">
             <div>
               <Label className="text-sm font-medium">
                 CUSTOMER NAME
@@ -670,26 +667,7 @@ export default function CreateSellInvoice() {
                 Cash/Counter Sale
               </div>
             </div>
-            <div>
-              <Label className="text-sm font-medium">DOCTOR NAME</Label>
-              <SearchSuggestion
-                suggestions={doctorSuggestions}
-                placeholder="Enter or select doctor name"
-                value={formData.doctorName}
-                setValue={(value) => handleInputChange("doctorName", value)}
-                onSuggestionSelect={(selected) => {
-                  handleInputChange("doctorName", selected.name);
-                  // Focus on the product input after selecting a doctor, using requestAnimationFrame
-                  requestAnimationFrame(() => {
-                    if (inputRef.current["product"]) {
-                      inputRef.current["product"].focus();
-                    }
-                  });
-                }}
-                onKeyDown={(e) => handleKeyDown(e, "doctorName")}
-                ref={(el) => (inputRef.current["doctorName"] = el)}
-              />
-            </div>
+           
             <div>
               <Label className="text-sm font-medium">
                 INVOICE NO
