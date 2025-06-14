@@ -567,7 +567,7 @@ export default function SaleTable({
                 onChange={(e) => handleInputChange("saleRate", e.target.value)}
                 value={newProduct.saleRate || ""}
                 type="text"
-                className="h-8 w-full border-[1px] border-gray-300 pl-5"
+                className="h-8 w-full border-[1px] border-gray-300 px-1 text-right"
                 onKeyDown={(e) => handleInputKeyDown(e, "saleRate")}
               />
             </div>

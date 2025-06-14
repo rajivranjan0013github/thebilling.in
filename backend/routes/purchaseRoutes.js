@@ -1293,7 +1293,7 @@ router.get("/inventory/:inventoryId", verifyToken, async (req, res) => {
         limit: parseInt(limit),
       },
       // Populate only necessary fields
-      select: "invoiceNumber distributorName mob createdAt products",
+      select: "invoiceNumber distributorName mob createdAt products invoiceDate",
       populate: {
         path: "products",
         match: { inventoryId: inventoryId },
@@ -1334,6 +1334,7 @@ router.get("/inventory/:inventoryId", verifyToken, async (req, res) => {
           _id: purchase._id,
           createdAt: purchase.createdAt,
           invoiceId: purchase._id,
+          invoiceDate: purchase.invoiceDate,
           invoiceNumber: purchase.invoiceNumber,
           distributorName: purchase.distributorName,
           isBatchTracked: product.isBatchTracked,

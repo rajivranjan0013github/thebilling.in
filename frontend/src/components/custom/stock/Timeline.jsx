@@ -117,11 +117,19 @@ export default function Timeline({ inventoryId, isBatchTracked, inventoryName })
                     <TableRow key={index} className="cursor-pointer">
                       <TableCell>
                         <div className="text-sm font-medium">
-                          {new Date(transaction.createdAt).toLocaleDateString()}
+                          {new Date(transaction.createdAt).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </div>
                         <div className="text-xs text-gray-500">
                           Time:{" "}
-                          {new Date(transaction.createdAt).toLocaleTimeString()}
+                          {new Date(transaction.createdAt).toLocaleTimeString("en-IN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            year: "numeric",
+                          })}
                         </div>
                       </TableCell>
                       <TableCell>

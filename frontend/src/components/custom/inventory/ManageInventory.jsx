@@ -12,9 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "../../ui/tooltip";
 import ProductSelector from "./SelectInventory";
 import { Backend_URL } from "../../../assets/Data";
-import {  setItemStatusIdle } from "../../../redux/slices/inventorySlice";
+import { setItemStatusIdle } from "../../../redux/slices/inventorySlice";
 
 const INITIAL_FORM_DATA = {
   inventoryId: "",
@@ -26,6 +32,8 @@ const INITIAL_FORM_DATA = {
   gstPer: "",
   purchaseRate: "",
   purchaseGstType: "Excl gst",
+  primaryUnit: "",
+  secondaryUnit: "",
   saleRate: "",
   saleGstType: "Incl gst",
   pack: "",
@@ -35,21 +43,21 @@ const INITIAL_FORM_DATA = {
 
 // Input keys in order of navigation
 const inputKeys = [
-  'productName',
-  'batchNumber',
-  'expiryMonth',
-  'expiryYear',
-  'mrp',
-  'HSN',
-  'gstPer',
-  'purchaseRate',
-  'purchaseGstType',
-  'saleRate',
-  'saleGstType',
-  'pack',
-  'packs',
-  'loose',
-  'submitButton'
+  "productName",
+  "batchNumber",
+  "expiryMonth",
+  "expiryYear",
+  "mrp",
+  "HSN",
+  "gstPer",
+  "purchaseRate",
+  "purchaseGstType",
+  "saleRate",
+  "saleGstType",
+  "pack",
+  "packs",
+  "loose",
+  "submitButton",
 ];
 
 export default function ManageInventory({
@@ -68,17 +76,23 @@ export default function ManageInventory({
 
   useEffect(() => {
     if (inventoryDetails && open) {
-      setFormData({ ...formData, inventoryId: inventoryDetails?._id, pack: inventoryDetails?.pack || "" });
+      setFormData({
+        ...formData,
+        inventoryId: inventoryDetails?._id,
+        pack: inventoryDetails?.pack || "",
+        primaryUnit: inventoryDetails?.primaryUnit || "",
+        secondaryUnit: inventoryDetails?.secondaryUnit || "",
+      });
       setProductSearch(inventoryDetails?.name);
       setTimeout(() => {
-        if (inputRef?.current?.['batchNumber']) {
-          inputRef.current['batchNumber'].focus();
+        if (inputRef?.current?.["batchNumber"]) {
+          inputRef.current["batchNumber"].focus();
         }
       }, 100);
     } else {
       setTimeout(() => {
-        if (inputRef?.current?.['productName']) {
-          inputRef.current['productName'].focus();
+        if (inputRef?.current?.["productName"]) {
+          inputRef.current["productName"].focus();
         }
       }, 100);
     }
@@ -134,13 +148,15 @@ export default function ManageInventory({
   };
 
   const handleKeyDown = (e, currentKey) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       const currentIndex = inputKeys.indexOf(currentKey);
-      
+
       // Check if current element is a select trigger
-      const isSelect = ['gstPer', 'purchaseGstType', 'saleGstType'].includes(currentKey);
-      
+      const isSelect = ["gstPer", "purchaseGstType", "saleGstType"].includes(
+        currentKey
+      );
+
       if (isSelect) {
         // Trigger click on the select to open it
         const selectEl = inputRef.current[currentKey];
@@ -168,20 +184,27 @@ export default function ManageInventory({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if(!formData.batchNumber) {
-      toast({title : 'Enter batch number', variant : 'destructive'});
+
+    if (!formData.batchNumber) {
+      toast({ title: "Enter batch number", variant: "destructive" });
       return;
-    } 
+    }
     if (isProductSelectorOpen) return;
 
     const expiry = `${formData.expiryMonth}/${formData.expiryYear}`;
 
-    const purchaseRate = formData.purchaseGstType === "Excl gst" ? formData.purchaseRate : formData.purchaseRate / (1 + formData.gstPer / 100);
+    const purchaseRate =
+      formData.purchaseGstType === "Excl gst"
+        ? formData.purchaseRate
+        : formData.purchaseRate / (1 + formData.gstPer / 100);
 
-    const saleRate = formData.saleGstType === "Excl gst"  ? formData.saleRate * (1+formData.gstPer/100)  : formData.saleRate;
+    const saleRate =
+      formData.saleGstType === "Excl gst"
+        ? formData.saleRate * (1 + formData.gstPer / 100)
+        : formData.saleRate;
 
-    const quantity = Number(formData.packs) * Number(formData.pack) + Number(formData.loose);
+    const quantity =
+      Number(formData.packs) * Number(formData.pack) + Number(formData.loose);
     const finalFormData = {
       inventoryId: formData.inventoryId,
       batchNumber: formData.batchNumber,
@@ -237,8 +260,8 @@ export default function ManageInventory({
     }));
     setProductSearch(product?.name);
     setTimeout(() => {
-      if (inputRef?.current?.['batchNumber']) {
-        inputRef.current['batchNumber'].focus();
+      if (inputRef?.current?.["batchNumber"]) {
+        inputRef.current["batchNumber"].focus();
       }
     }, 100);
   };
@@ -248,13 +271,18 @@ export default function ManageInventory({
       <SheetContent className="w-full sm:max-w-[500px] overflow-y-auto p-0 gap-0">
         <div className="flex justify-between items-center pr-4 px-4 py-2.5 bg-gray-100 border-b">
           <SheetHeader className="p-0">
-            <SheetTitle className="text-base font-semibold">Add New Batch</SheetTitle>
+            <SheetTitle className="text-base font-semibold">
+              Add New Batch
+            </SheetTitle>
           </SheetHeader>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="productName" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="productName"
+              className="text-sm font-medium text-gray-700"
+            >
               PRODUCT NAME<span className="text-red-500">*</span>
             </Label>
             <Input
@@ -268,9 +296,10 @@ export default function ManageInventory({
                   setIsProductSelectorOpen(true);
                 }
               }}
-              onKeyDown={(e) => handleKeyDown(e, 'productName')}
-              ref={el => inputRef.current['productName'] = el}
-              className="h-9"
+              disabled={true}
+              onKeyDown={(e) => handleKeyDown(e, "productName")}
+              ref={(el) => (inputRef.current["productName"] = el)}
+              className="h-9 font-semibold"
             />
             <ProductSelector
               open={isProductSelectorOpen}
@@ -283,7 +312,10 @@ export default function ManageInventory({
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label htmlFor="batchNumber" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="batchNumber"
+                className="text-sm font-medium text-gray-700"
+              >
                 BATCH NUMBER<span className="text-red-500">*</span>
               </Label>
               <Input
@@ -292,13 +324,16 @@ export default function ManageInventory({
                 placeholder="Batch Number"
                 value={formData.batchNumber}
                 onChange={handleInputChange}
-                className="h-9"
-                onKeyDown={(e) => handleKeyDown(e, 'batchNumber')}
-                ref={el => inputRef.current['batchNumber'] = el}
+                className="h-9 font-semibold"
+                onKeyDown={(e) => handleKeyDown(e, "batchNumber")}
+                ref={(el) => (inputRef.current["batchNumber"] = el)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expiryDate" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="expiryDate"
+                className="text-sm font-medium text-gray-700"
+              >
                 BATCH EXPIRY DATE<span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
@@ -308,9 +343,9 @@ export default function ManageInventory({
                   placeholder="MM"
                   value={formData.expiryMonth}
                   onChange={handleInputChange}
-                  className="h-9"
-                  onKeyDown={(e) => handleKeyDown(e, 'expiryMonth')}
-                  ref={el => inputRef.current['expiryMonth'] = el}
+                  className="h-9 font-semibold"
+                  onKeyDown={(e) => handleKeyDown(e, "expiryMonth")}
+                  ref={(el) => (inputRef.current["expiryMonth"] = el)}
                 />
                 <Input
                   id="expiryYear"
@@ -318,9 +353,9 @@ export default function ManageInventory({
                   placeholder="YY"
                   value={formData.expiryYear}
                   onChange={handleInputChange}
-                  className="h-9"
-                  onKeyDown={(e) => handleKeyDown(e, 'expiryYear')}
-                  ref={el => inputRef.current['expiryYear'] = el}
+                  className="h-9 font-semibold"
+                  onKeyDown={(e) => handleKeyDown(e, "expiryYear")}
+                  ref={(el) => (inputRef.current["expiryYear"] = el)}
                 />
               </div>
             </div>
@@ -328,22 +363,29 @@ export default function ManageInventory({
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label htmlFor="mrp" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="mrp"
+                className="text-sm font-medium text-gray-700"
+              >
                 MRP (INCL GST)<span className="text-red-500">*</span>
               </Label>
+              <div className=""></div>
               <Input
                 id="mrp"
                 name="mrp"
                 placeholder="MRP (incl gst)"
                 value={formData.mrp}
                 onChange={handleInputChange}
-                className="h-9"
-                onKeyDown={(e) => handleKeyDown(e, 'mrp')}
-                ref={el => inputRef.current['mrp'] = el}
+                className="h-9 font-semibold"
+                onKeyDown={(e) => handleKeyDown(e, "mrp")}
+                ref={(el) => (inputRef.current["mrp"] = el)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="HSN" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="HSN"
+                className="text-sm font-medium text-gray-700"
+              >
                 HSN CODE WITH GST RATE<span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
@@ -353,9 +395,9 @@ export default function ManageInventory({
                   placeholder="Ex. 3004"
                   value={formData.HSN}
                   onChange={handleInputChange}
-                  className="h-9"
-                  onKeyDown={(e) => handleKeyDown(e, 'HSN')}
-                  ref={el => inputRef.current['HSN'] = el}
+                  className="h-9 font-semibold"
+                  onKeyDown={(e) => handleKeyDown(e, "HSN")}
+                  ref={(el) => (inputRef.current["HSN"] = el)}
                 />
                 <Select
                   name="gstPer"
@@ -365,7 +407,7 @@ export default function ManageInventory({
                   }}
                   onOpenChange={(open) => {
                     if (!open) {
-                      const currentIndex = inputKeys.indexOf('gstPer');
+                      const currentIndex = inputKeys.indexOf("gstPer");
                       if (currentIndex < inputKeys.length - 1) {
                         const nextKey = inputKeys[currentIndex + 1];
                         setTimeout(() => {
@@ -375,10 +417,10 @@ export default function ManageInventory({
                     }
                   }}
                 >
-                  <SelectTrigger 
-                    className="w-24 h-9" 
-                    ref={el => inputRef.current['gstPer'] = el}
-                    onKeyDown={(e) => handleKeyDown(e, 'gstPer')}
+                  <SelectTrigger
+                    className="w-24 h-9"
+                    ref={(el) => (inputRef.current["gstPer"] = el)}
+                    onKeyDown={(e) => handleKeyDown(e, "gstPer")}
                   >
                     <SelectValue placeholder="gst %" />
                   </SelectTrigger>
@@ -396,7 +438,10 @@ export default function ManageInventory({
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label htmlFor="purchaseRate" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="purchaseRate"
+                className="text-sm font-medium text-gray-700"
+              >
                 PURCHASE RATE
               </Label>
               <div className="flex gap-2">
@@ -406,9 +451,9 @@ export default function ManageInventory({
                   placeholder="Purch Rate"
                   value={formData.purchaseRate}
                   onChange={handleInputChange}
-                  className="h-9"
-                  onKeyDown={(e) => handleKeyDown(e, 'purchaseRate')}
-                  ref={el => inputRef.current['purchaseRate'] = el}
+                  className="h-9 font-semibold"
+                  onKeyDown={(e) => handleKeyDown(e, "purchaseRate")}
+                  ref={(el) => (inputRef.current["purchaseRate"] = el)}
                 />
                 <Select
                   name="purchaseGstType"
@@ -420,7 +465,7 @@ export default function ManageInventory({
                   }}
                   onOpenChange={(open) => {
                     if (!open) {
-                      const currentIndex = inputKeys.indexOf('purchaseGstType');
+                      const currentIndex = inputKeys.indexOf("purchaseGstType");
                       if (currentIndex < inputKeys.length - 1) {
                         const nextKey = inputKeys[currentIndex + 1];
                         setTimeout(() => {
@@ -430,10 +475,10 @@ export default function ManageInventory({
                     }
                   }}
                 >
-                  <SelectTrigger 
-                    className="w-24 h-9" 
-                    ref={el => inputRef.current['purchaseGstType'] = el}
-                    onKeyDown={(e) => handleKeyDown(e, 'purchaseGstType')}
+                  <SelectTrigger
+                    className="w-24 h-9"
+                    ref={(el) => (inputRef.current["purchaseGstType"] = el)}
+                    onKeyDown={(e) => handleKeyDown(e, "purchaseGstType")}
                   >
                     <SelectValue placeholder="Excl gst" />
                   </SelectTrigger>
@@ -445,7 +490,10 @@ export default function ManageInventory({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="saleRate" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="saleRate"
+                className="text-sm font-medium text-gray-700"
+              >
                 SALE RATE
               </Label>
               <div className="flex gap-2">
@@ -455,9 +503,9 @@ export default function ManageInventory({
                   placeholder="Sale Rate"
                   value={formData.saleRate}
                   onChange={handleInputChange}
-                  className="h-9"
-                  onKeyDown={(e) => handleKeyDown(e, 'saleRate')}
-                  ref={el => inputRef.current['saleRate'] = el}
+                  className="h-9 font-semibold"
+                  onKeyDown={(e) => handleKeyDown(e, "saleRate")}
+                  ref={(el) => (inputRef.current["saleRate"] = el)}
                 />
                 <Select
                   name="saleGstType"
@@ -469,7 +517,7 @@ export default function ManageInventory({
                   }}
                   onOpenChange={(open) => {
                     if (!open) {
-                      const currentIndex = inputKeys.indexOf('saleGstType');
+                      const currentIndex = inputKeys.indexOf("saleGstType");
                       if (currentIndex < inputKeys.length - 1) {
                         const nextKey = inputKeys[currentIndex + 1];
                         setTimeout(() => {
@@ -479,10 +527,10 @@ export default function ManageInventory({
                     }
                   }}
                 >
-                  <SelectTrigger 
-                    className="w-24 h-9" 
-                    ref={el => inputRef.current['saleGstType'] = el}
-                    onKeyDown={(e) => handleKeyDown(e, 'saleGstType')}
+                  <SelectTrigger
+                    className="w-24 h-9"
+                    ref={(el) => (inputRef.current["saleGstType"] = el)}
+                    onKeyDown={(e) => handleKeyDown(e, "saleGstType")}
                   >
                     <SelectValue placeholder="Incl gst" />
                   </SelectTrigger>
@@ -494,38 +542,111 @@ export default function ManageInventory({
               </div>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label htmlFor="pack" className="text-sm font-medium text-gray-700">
-                UNITS PER PACK<span className="text-red-500">*</span>
-              </Label>
+              <div className="flex items-center gap-1">
+                <Label
+                  htmlFor="primaryUnit"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  PRIMARY UNIT<span className="text-red-500">*</span>
+                </Label>
+                <TooltipProvider>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-blue-600 border border-blue-600 rounded-full w-4 h-4 flex items-center justify-center"
+                      >
+                        i
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Primary Unit is not editable, edit from the edit item
+                      button
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Input
-                id="pack"
-                name="pack"
-                placeholder="Ex. Tablets or Capsule per Strip"
-                value={formData.pack}
+                id="primaryUnit"
+                name="primaryUnit"
+                placeholder="Primary Unit"
+                value={formData.primaryUnit}
                 onChange={handleInputChange}
-                className="h-9"
-                onKeyDown={(e) => handleKeyDown(e, 'pack')}
-                ref={el => inputRef.current['pack'] = el}
+                disabled={true}
+                className="h-9 font-semibold"
+                onKeyDown={(e) => handleKeyDown(e, "primaryUnit")}
+                ref={(el) => (inputRef.current["primaryUnit"] = el)}
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 h-full">
-                <div className="bg-pink-500 rounded-full p-1 w-6 h-6 flex items-center justify-center text-white">
-                  💊
-                </div>
-                <p>
-                  For a strip of 10 tablets, the Units per Pack will
-                  be 10
-                </p>
+              <div className="flex items-center gap-1">
+                <Label
+                  htmlFor="secondaryUnit"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  SECONDARY UNIT<span className="text-red-500">*</span>
+                </Label>
+                <TooltipProvider>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-blue-600 border border-blue-600 rounded-full w-4 h-4 flex items-center justify-center"
+                      >
+                        i
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Secondary Unit is not editable, edit from the edit item
+                      button
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
+              <Input
+                id="secondaryUnit"
+                name="secondaryUnit"
+                placeholder="Secondary Unit"
+                value={formData.secondaryUnit}
+                onChange={handleInputChange}
+                disabled={true}
+                className="h-9 font-semibold"
+                onKeyDown={(e) => handleKeyDown(e, "secondaryUnit")}
+                ref={(el) => (inputRef.current["secondaryUnit"] = el)}
+              />
             </div>
           </div>
 
+          {formData.secondaryUnit && (
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="pack"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  UNITS PER PACK<span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="pack"
+                  name="pack"
+                  placeholder="Ex. Tablets or Capsule per Strip"
+                  value={formData.pack}
+                  onChange={handleInputChange}
+                  className="h-9 font-semibold"
+                  onKeyDown={(e) => handleKeyDown(e, "pack")}
+                  ref={(el) => (inputRef.current["pack"] = el)}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="packs" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="packs"
+              className="text-sm font-medium text-gray-700"
+            >
               QUANTITY IN STOCK<span className="text-red-500">*</span>
             </Label>
             <div className="grid grid-cols-2 gap-5">
@@ -535,9 +656,9 @@ export default function ManageInventory({
                 placeholder="No of Packs"
                 value={formData.packs}
                 onChange={handleInputChange}
-                className="h-9"
-                onKeyDown={(e) => handleKeyDown(e, 'packs')}
-                ref={el => inputRef.current['packs'] = el}
+                className="h-9 font-semibold"
+                onKeyDown={(e) => handleKeyDown(e, "packs")}
+                ref={(el) => (inputRef.current["packs"] = el)}
               />
               <Input
                 id="loose"
@@ -545,16 +666,16 @@ export default function ManageInventory({
                 placeholder="Loose Units"
                 value={formData.loose || ""}
                 onChange={handleInputChange}
-                className="h-9"
-                onKeyDown={(e) => handleKeyDown(e, 'loose')}
-                ref={el => inputRef.current['loose'] = el}
+                className="h-9 font-semibold"
+                onKeyDown={(e) => handleKeyDown(e, "loose")}
+                ref={(el) => (inputRef.current["loose"] = el)}
               />
             </div>
           </div>
         </form>
 
         <div className="p-3  flex items-center justify-end gap-2 b-0">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
@@ -566,7 +687,7 @@ export default function ManageInventory({
             size="sm"
             disabled={isLoading}
             onClick={handleSubmit}
-            ref={el => inputRef.current['submitButton'] = el}
+            ref={(el) => (inputRef.current["submitButton"] = el)}
             className="bg-blue-600 text-white hover:bg-blue-700"
           >
             {isLoading ? "Saving..." : "Save"}

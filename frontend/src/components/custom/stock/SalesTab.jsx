@@ -137,7 +137,11 @@ export default function SalesTab({ inventoryId, isBatchTracked }) {
                     >
                       <TableCell>
                         <div className="text-sm font-medium">
-                          {new Date(sale.createdAt).toLocaleDateString()}
+                          {new Date(sale.invoiceDate).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </div>
                       </TableCell>
                       <TableCell>

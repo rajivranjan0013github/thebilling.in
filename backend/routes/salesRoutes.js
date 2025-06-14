@@ -772,6 +772,7 @@ router.get("/inventory/:inventoryId", verifyToken, async (req, res) => {
           _id: sale._id,
           createdAt: sale.createdAt,
           invoiceId: sale._id,
+          invoiceDate: sale.invoiceDate,
           invoiceNumber: sale.invoiceNumber,
           isBatchTracked: product.isBatchTracked,
           customerName: sale.customerName,

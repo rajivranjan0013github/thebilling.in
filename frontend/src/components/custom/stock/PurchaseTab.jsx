@@ -125,7 +125,11 @@ export default function PurchaseTab({ inventoryId, isBatchTracked }) {
                     >
                       <TableCell>
                         <div className="text-sm font-medium">
-                          {new Date(purchase.createdAt).toLocaleDateString()}
+                          {new Date(purchase.invoiceDate).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </div>
                       </TableCell>
                       <TableCell>

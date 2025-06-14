@@ -38,15 +38,22 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDashboardMetrics, resetDashboardState } from "../redux/slices/dashboardSlice";
+import {
+  fetchDashboardMetrics,
+  resetDashboardState,
+} from "../redux/slices/dashboardSlice";
 
 const Dashboard = () => {
   const isMobile = useMediaQuery("(max-width: 767px)");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { data: dashboardData, loading: loadingState, error } = useSelector((state) => state.dashboard);
-  const isLoading = loadingState === 'pending' || loadingState === 'idle';
+  const {
+    data: dashboardData,
+    loading: loadingState,
+    error,
+  } = useSelector((state) => state.dashboard);
+  const isLoading = loadingState === "pending" || loadingState === "idle";
 
   const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState(() => {
@@ -63,7 +70,7 @@ const Dashboard = () => {
   }, [dateFilter, dispatch]);
 
   useEffect(() => {
-    if (dateFilter === "Today" && loadingState === 'idle') {
+    if (dateFilter === "Today" && loadingState === "idle") {
       const { from, to } = convertFilterToDateRange("Today");
       dispatch(fetchDashboardMetrics({ from, to }));
     }
@@ -77,7 +84,9 @@ const Dashboard = () => {
 
   const handleDateSearch = () => {
     if (dateRange.from && dateRange.to) {
-      dispatch(fetchDashboardMetrics({ from: dateRange.from, to: dateRange.to }));
+      dispatch(
+        fetchDashboardMetrics({ from: dateRange.from, to: dateRange.to })
+      );
     }
   };
 
@@ -139,8 +148,18 @@ const Dashboard = () => {
         <div className="text-center py-10 text-red-600">
           <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
           <p className="mt-4 text-lg">Error loading dashboard data:</p>
-          <p>{typeof error === 'string' ? error : JSON.stringify(error)}</p>
-          <Button onClick={() => dispatch(fetchDashboardMetrics({ from: dateRange.from, to: dateRange.to }))} className="mt-4">
+          <p>{typeof error === "string" ? error : JSON.stringify(error)}</p>
+          <Button
+            onClick={() =>
+              dispatch(
+                fetchDashboardMetrics({
+                  from: dateRange.from,
+                  to: dateRange.to,
+                })
+              )
+            }
+            className="mt-4"
+          >
             Try Again
           </Button>
         </div>
@@ -192,7 +211,9 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        <div className="text-center py-10">No data available for the selected period.</div>
+        <div className="text-center py-10">
+          No data available for the selected period.
+        </div>
       </div>
     );
   }
@@ -250,157 +271,197 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview - Updated for new data structure */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Card 1: Sales Summary */}
-        <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 bg-gradient-to-br from-indigo-50 to-blue-50">
-          <div className={`h-1 ${gradients.blue}`} />
-          <CardContent className="p-3">
+        <Card className="overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl bg-gradient-to-br from-indigo-50 to-blue-50 border-none cursor-pointer">
+          <div className={`h-1.5 ${gradients.blue}`} />
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-indigo-600">
+                <p className="text-sm font-semibold tracking-wide text-indigo-600">
                   Sales Summary
                 </p>
-                <h3 className="text-xl font-bold mt-0.5 text-gray-900">
+                <h3 className="text-2xl font-extrabold mt-1 text-gray-900 tracking-tight">
                   ₹{dashboardData.salesSummary.totalRevenue.toLocaleString()}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm font-medium text-gray-600 mt-2">
                   {dashboardData.salesSummary.totalSales} orders
                 </p>
-                <p className="text-sm text-gray-500">
-                  Received: ₹{dashboardData.salesSummary.totalAmountReceived.toLocaleString()}
+                <p className="text-sm font-medium text-gray-500 mt-1">
+                  Received: ₹
+                  {dashboardData.salesSummary.totalAmountReceived.toLocaleString()}
                 </p>
-                <p className="text-sm text-red-600">
-                  Due: ₹{dashboardData.salesSummary.totalAmountDue.toLocaleString()} ({dashboardData.salesSummary.dueInvoicesCount} invoices)
+                <p className="text-sm font-medium text-red-600 mt-1">
+                  Due: ₹
+                  {dashboardData.salesSummary.totalAmountDue.toLocaleString()} (
+                  {dashboardData.salesSummary.dueInvoicesCount} invoices)
                 </p>
               </div>
-              <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-indigo-500/20">
-                <ShoppingCart className="h-4 w-4 text-indigo-600" />
+              <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500/30 to-indigo-500/30 shadow-inner">
+                <ShoppingCart className="h-5 w-5 text-indigo-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Card 2: Purchase Summary */}
-        <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 bg-gradient-to-br from-emerald-50 to-teal-50">
-          <div className={`h-1 ${gradients.green}`} />
-          <CardContent className="p-3">
+        <Card className="overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl bg-gradient-to-br from-emerald-50 to-teal-50 border-none cursor-pointer">
+          <div className={`h-1.5 ${gradients.green}`} />
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-emerald-600">
+                <p className="text-sm font-semibold tracking-wide text-emerald-600">
                   Purchase Summary
                 </p>
-                <h3 className="text-xl font-bold mt-0.5 text-gray-900">
+                <h3 className="text-2xl font-extrabold mt-1 text-gray-900 tracking-tight">
                   ₹{dashboardData.purchaseSummary.totalCost.toLocaleString()}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm font-medium text-gray-600 mt-2">
                   {dashboardData.purchaseSummary.totalPurchases} purchases
                 </p>
-                <p className="text-sm text-gray-500">
-                  Paid: ₹{dashboardData.purchaseSummary.totalAmountPaid.toLocaleString()}
+                <p className="text-sm font-medium text-gray-500 mt-1">
+                  Paid: ₹
+                  {dashboardData.purchaseSummary.totalAmountPaid.toLocaleString()}
                 </p>
-                <p className="text-sm text-orange-600">
-                  Due: ₹{dashboardData.purchaseSummary.totalAmountDue.toLocaleString()} ({dashboardData.purchaseSummary.dueInvoicesCount} invoices)
+                <p className="text-sm font-medium text-orange-600 mt-1">
+                  Due: ₹
+                  {dashboardData.purchaseSummary.totalAmountDue.toLocaleString()}{" "}
+                  ({dashboardData.purchaseSummary.dueInvoicesCount} invoices)
                 </p>
               </div>
-              <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
-                <Truck className="h-4 w-4 text-emerald-600" />
+              <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-500/30 to-teal-500/30 shadow-inner">
+                <Truck className="h-5 w-5 text-emerald-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Card 3: Payment Summary */}
-        <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 bg-gradient-to-br from-amber-50 to-orange-50">
-          <div className={`h-1 ${gradients.amber}`} />
-          <CardContent className="p-3">
+        <Card className="overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl bg-gradient-to-br from-amber-50 to-orange-50 border-none cursor-pointer">
+          <div className={`h-1.5 ${gradients.amber}`} />
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-amber-600">
+                <p className="text-sm font-semibold tracking-wide text-amber-600">
                   Payment Summary
                 </p>
-                <h3 className={`text-xl font-bold mt-0.5 ${dashboardData.paymentSummary.netCashFlow >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                <h3
+                  className={`text-2xl font-extrabold mt-1 tracking-tight ${
+                    dashboardData.paymentSummary.netCashFlow >= 0
+                      ? "text-green-700"
+                      : "text-red-700"
+                  }`}
+                >
                   ₹{dashboardData.paymentSummary.netCashFlow.toLocaleString()}
-                  <span className="text-sm font-normal text-gray-600"> (Net Flow)</span>
+                  <span className="text-sm font-medium text-gray-600 ml-1">
+                    (Net Flow)
+                  </span>
                 </h3>
-                <p className="text-sm text-green-600 mt-1">
-                  In: ₹{dashboardData.paymentSummary.totalPaymentIn.toLocaleString()}
+                <p className="text-sm font-medium text-green-600 mt-2">
+                  In: ₹
+                  {dashboardData.paymentSummary.totalPaymentIn.toLocaleString()}
                 </p>
-                <p className="text-sm text-red-600">
-                  Out: ₹{dashboardData.paymentSummary.totalPaymentOut.toLocaleString()}
+                <p className="text-sm font-medium text-red-600 mt-1">
+                  Out: ₹
+                  {dashboardData.paymentSummary.totalPaymentOut.toLocaleString()}
                 </p>
               </div>
-              <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-500/20 to-orange-500/20">
-                <ArrowLeftRight className="h-4 w-4 text-amber-600" />
+              <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-500/30 to-orange-500/30 shadow-inner">
+                <ArrowLeftRight className="h-5 w-5 text-amber-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Card 4: Financial Metrics */}
-        <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 bg-gradient-to-br from-purple-50 to-pink-50">
-          <div className={`h-1 ${gradients.purple}`} />
-          <CardContent className="p-3">
+        <Card className="overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl bg-gradient-to-br from-purple-50 to-pink-50 border-none cursor-pointer">
+          <div className={`h-1.5 ${gradients.purple}`} />
+          <CardContent className="p-4">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-purple-600">
+                <p className="text-sm font-semibold tracking-wide text-purple-600">
                   Financial Metrics
                 </p>
-                <div className="mt-1 space-y-1">
-                  <p className="text-base  text-red-600 flex items-center">
-                    <TrendingUp className="h-4 w-4 mr-1"/>
-                    Receivables: ₹{dashboardData.financialMetrics.totalReceivables.toLocaleString()}
+                <div className="mt-2 space-y-2">
+                  <p className="text-base font-medium text-red-600 flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2" />
+                    Receivables: ₹
+                    {dashboardData.financialMetrics.totalReceivables.toLocaleString()}
                   </p>
-                  <p className="text-base text-orange-600 flex items-center">
-                    <TrendingDown className="h-4 w-4 mr-1"/>
-                    Payables: ₹{dashboardData.financialMetrics.totalPayables.toLocaleString()}
+                  <p className="text-base font-medium text-orange-600 flex items-center">
+                    <TrendingDown className="h-5 w-5 mr-2" />
+                    Payables: ₹
+                    {dashboardData.financialMetrics.totalPayables.toLocaleString()}
                   </p>
                 </div>
               </div>
-              <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-                <Landmark className="h-4 w-4 text-purple-600" />
+              <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500/30 to-pink-500/30 shadow-inner">
+                <Landmark className="h-5 w-5 text-purple-600" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Account-wise Payment Breakdowns -> Changed to Method-wise */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+      {/* Account-wise Payment Breakdowns */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {/* Method Wise Payment In */}
-        <Card className="hover:shadow-md transition-shadow duration-300">
-          <CardHeader className="p-3 pb-1">
-            <CardTitle className="text-base font-medium text-green-700">Payment In by Method</CardTitle>
+        <Card className="transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl border-none bg-gradient-to-br from-green-50 to-emerald-50">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base font-semibold tracking-wide text-green-700">
+              Payment In by Method
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-3 text-sm max-h-40 overflow-y-auto space-y-1">
+          <CardContent className="p-4 text-sm max-h-44 overflow-y-auto space-y-2">
             {dashboardData.paymentSummary.paymentInMethods.length > 0 ? (
               dashboardData.paymentSummary.paymentInMethods.map((method) => (
-                <div key={method.method} className="flex justify-between">
-                  <span className="capitalize">{method.method.toLowerCase()}</span>
-                  <span className="font-medium">₹{method.totalAmount.toLocaleString()}</span>
+                <div
+                  key={method.method}
+                  className="flex justify-between items-center p-2 rounded-lg hover:bg-white/50 transition-colors cursor-pointer"
+                >
+                  <span className="capitalize font-medium">
+                    {method.method.toLowerCase()}
+                  </span>
+                  <span className="font-semibold text-green-700">
+                    ₹{method.totalAmount.toLocaleString()}
+                  </span>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No payments received in this period.</p>
+              <p className="text-sm text-gray-500 italic">
+                No payments received in this period.
+              </p>
             )}
           </CardContent>
         </Card>
 
         {/* Method Wise Payment Out */}
-        <Card className="hover:shadow-md transition-shadow duration-300">
-          <CardHeader className="p-3 pb-1">
-            <CardTitle className="text-base font-medium text-red-700">Payment Out by Method</CardTitle>
+        <Card className="transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl border-none bg-gradient-to-br from-red-50 to-rose-50">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base font-semibold tracking-wide text-red-700">
+              Payment Out by Method
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-3 text-sm max-h-40 overflow-y-auto space-y-1">
-             {dashboardData.paymentSummary.paymentOutMethods.length > 0 ? (
+          <CardContent className="p-4 text-sm max-h-44 overflow-y-auto space-y-2">
+            {dashboardData.paymentSummary.paymentOutMethods.length > 0 ? (
               dashboardData.paymentSummary.paymentOutMethods.map((method) => (
-                <div key={method.method} className="flex justify-between">
-                   <span className="capitalize">{method.method.toLowerCase()}</span>
-                  <span className="font-medium">₹{method.totalAmount.toLocaleString()}</span>
+                <div
+                  key={method.method}
+                  className="flex justify-between items-center p-2 rounded-lg hover:bg-white/50 transition-colors cursor-pointer"
+                >
+                  <span className="capitalize font-medium">
+                    {method.method.toLowerCase()}
+                  </span>
+                  <span className="font-semibold text-red-700">
+                    ₹{method.totalAmount.toLocaleString()}
+                  </span>
                 </div>
               ))
-             ) : (
-               <p className="text-sm text-gray-500">No payments made in this period.</p>
-             )}
+            ) : (
+              <p className="text-sm text-gray-500 italic">
+                No payments made in this period.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
